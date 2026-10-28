@@ -1,0 +1,3036 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Items</title>
+  <style>
+    :root{
+      --bg: #ffffff;
+      --text: #111827;
+      --panel-bg: #ffffff;
+      --panel-border: #dddddd;
+      --border: #e6e6e6;
+      --header-bg: #fafafa;
+      --muted: #555555;
+      --accent: #2b6cb0;
+      --range-accent: #1e40af;
+      --match: #228b22;
+      --match-bg: #f0f8f0;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg: #071019;
+        --text: #dbeafe;
+        --panel-bg: #071621;
+        --panel-border: #20303a;
+        --border: #23313a;
+        --header-bg: #0b1620;
+        --muted: #99b3c8;
+        --accent: #66b2ff;
+        --range-accent: #93c5fd;
+        --match: #90ee90;
+        --match-bg: #0a2a0a;
+      }
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text)}
+    body{font-family:system-ui,Segoe UI,Arial;margin:16px;box-sizing:border-box;display:flex;flex-direction:column;height:100%;font-size:0.95em}
+    
+    h2{margin:0 0 12px 0}
+    .cols{display:flex;gap:16px;align-items:stretch;flex:1 1 auto;overflow:auto}
+    .panel{border:1px solid var(--panel-border);background:var(--panel-bg);padding:12px;border-radius:6px;box-sizing:border-box;overflow:auto}
+    
+    #filters{position:absolute;z-index:10002;top:12px;left:11px;bottom:auto;width:var(--sidebar-width,260px);height:42px;max-width:min(480px,calc(100vw - 32px));padding:0;overflow:hidden;transition:width 0.28s cubic-bezier(0.2,0,0,1),height 0.28s cubic-bezier(0.2,0,0,1)}
+    body.sidebar-open #filters{width:var(--sidebar-width,260px);height:calc(100% - 24px);overflow-y:auto}
+    body.sidebar-open #content{--sidebar-content-offset:calc(var(--sidebar-width,260px) + 12px)}
+    body.sidebar-open #sidebar-toggle-placeholder{flex-basis:0}
+    .sidebar-header{position:sticky;top:0;z-index:1;display:flex;height:40px;align-items:center;gap:8px;margin-right:12px;background:var(--panel-bg)}
+    #sidebar-content{opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity 0.15s ease,transform 0.2s ease,visibility 0s linear 0.2s}
+    body.sidebar-open #sidebar-content{opacity:1;visibility:visible;transform:translateY(0);transition:opacity 0.2s ease 0.08s,transform 0.2s ease 0.08s,visibility 0s}
+    #sidebar-content{padding:12px}
+    #content{position:relative;flex:1;min-width:400px;overflow:auto;display:flex;flex-direction:column;background:transparent;padding-left:calc(12px + var(--sidebar-content-offset,0px));border:0;transition:padding-left 0.28s cubic-bezier(0.2,0,0,1)}
+    
+    .category-group{margin-bottom:12px}
+    .category-section-title{margin:4px 0 8px;padding:6px;font-weight:700;color:var(--muted)}
+    .category-section+.category-section{margin-top:12px;padding-top:8px;border-top:1px solid var(--border)}
+    .category-group-title{font-weight:600;font-size:0.9em;color:var(--accent);margin-bottom:6px;margin-top:8px;padding-bottom:4px;padding:6px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;border-radius:4px;transition:background 0.2s;white-space:nowrap}
+    .category-group-title:hover{background:rgba(0,0,0,0.05)}
+    .category-group-title::before{content:'▼';display:inline-block;min-width:12px;text-align:center;font-size:0.7em;transition:transform 0.2s}
+    .category-group-title.collapsed::before{transform:rotate(-90deg)}
+    .category-group-title:first-child{margin-top:0}
+    .category-buttons{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;max-height:500px;overflow:hidden;transition:max-height 0.3s ease;padding:0 6px}
+    .category-group.collapsed .category-buttons{max-height:0;padding:0;margin:0}
+    .cat-btn{padding:6px 12px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;border-radius:4px;transition:background 0.15s;font-size:0.8em;white-space:nowrap}
+    .cat-btn.active{background:#4a90e2;color:white;border-color:#4a90e2;font-weight:600}
+    .cat-btn:hover{background:rgba(0,0,0,0.05)}
+    
+    input[type=text]{width:100%;padding:6px;margin-bottom:8px;background:transparent;border:1px solid var(--border);color:var(--text);box-sizing:border-box;border-radius:4px}
+    .config-panel{display:flex;align-items:center;gap:6px;height:28px;margin-bottom:12px}
+    #qualityRange{width:160px;height:22px;padding:0;-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer}
+    #qualityRange:focus{outline:none}
+    #qualityRange::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--border)}
+    #qualityRange::-moz-range-track{height:6px;border-radius:3px;background:var(--border)}
+    #qualityRange::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;box-sizing:border-box;width:16px;height:16px;margin-top:-5px;border:2px solid var(--panel-bg);border-radius:50%;background:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+    #qualityRange::-moz-range-thumb{box-sizing:border-box;width:16px;height:16px;border:2px solid var(--panel-bg);border-radius:50%;background:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+    #qualityNumber{box-sizing:border-box;height:28px;padding:3px 5px;border:1px solid var(--border);border-radius:4px;background:var(--panel-bg);color:var(--text)}
+    
+    table.results{width:auto;border-collapse:separate;border-spacing:0}
+    table.results th,table.results td{border:1px solid var(--border);padding:6px;text-align:left;vertical-align:top;background-clip:padding-box;font-size:0.8em;white-space:nowrap}
+    table.results thead th,table.results th,table.results td{text-align:left !important}
+    table.results th{background:var(--header-bg);font-weight:600}
+    table.results th.sortable{cursor:pointer;user-select:none;padding-right:20px;white-space:nowrap;box-sizing:border-box}
+    .cols .panel table.results{position:relative}
+    .cols .panel table.results thead th{position:sticky;z-index:9999 !important;background:var(--header-bg) !important;backdrop-filter:none;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+    .cols .panel table.results tbody tr,.cols .panel table.results tbody td{position:relative;z-index:1}
+    table.results th.table-title{text-align:center;font-size:1.15em;font-weight:700;padding:10px 6px;background:var(--panel-bg)}
+    .range-highlight{color:var(--range-accent);font-weight:600}
+    .table-sort-indicator{display:inline-flex;width:14px;height:1em;margin-left:2px;align-items:center;justify-content:center;vertical-align:middle;line-height:1;white-space:nowrap}
+    .crit-dps-toggle.is-enabled{color:var(--range-accent)}
+    .crit-dps-toggle input{accent-color:var(--range-accent)}
+    .crit-dps-value.is-enabled,.crit-dps-value.is-enabled .crit-chance-range{color:var(--range-accent)}
+    .crit-dps-header.is-enabled{color:var(--range-accent)}
+    table.results tbody tr:hover{background:rgba(0,0,0,0.02)}
+    table.results tbody tr.selected{background:var(--accent);color:white}
+    @media (prefers-color-scheme: dark){
+      table.results tbody tr.selected{background:#1e4d7b;color:#ffffff}
+    }
+    .small{font-size:0.8em;color:var(--muted)}
+    .maincolshadow{box-shadow:0 6px 10px rgba(0,0,0,0.06)}
+    table.results tbody tr td:first-child{min-width:var(--name-col-width, 100px)}
+    
+    #table-results{box-sizing:border-box;min-height:0;overflow:auto;border:1px solid var(--border);border-radius:8px;padding-bottom:0;margin:0;scrollbar-width:thin;scrollbar-color:rgba(120,130,140,0.55) transparent}
+    #table-results::-webkit-scrollbar{width:12px;height:12px}
+    #table-results::-webkit-scrollbar-track{background:transparent}
+    #table-results::-webkit-scrollbar-thumb{min-width:28px;min-height:28px;border:3px solid transparent;border-radius:8px;background:rgba(120,130,140,0.55);background-clip:content-box}
+    #table-results::-webkit-scrollbar-thumb:hover{background-color:rgba(120,130,140,0.8)}
+    #table-results::-webkit-scrollbar-corner{background:transparent}
+    #content.with-mods{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(120px,var(--table-height,30vh)) 8px minmax(0,1fr);gap:6px 12px;overflow:hidden;min-height:0}
+    #content.with-mods #table-controls{grid-column:1 / -1;grid-row:1;min-width:0}
+    #content.with-mods #table-results{grid-column:1;grid-row:2;min-width:0}
+    #table-resize-handle{grid-column:1;grid-row:3;position:relative;min-width:0;cursor:ns-resize;touch-action:none;user-select:none}
+    #table-resize-handle::after{position:absolute;top:3px;left:50%;width:48px;height:2px;border-radius:1px;background:var(--border);content:'';transform:translateX(-50%)}
+    #table-resize-handle:hover::after,#table-resize-handle:focus-visible::after{background:var(--accent)}
+    #table-resize-handle:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+    #content.with-mods table.results{min-width:100%}
+    #content.with-mods table.results thead tr:nth-child(2) > th:first-child,
+    #content.with-mods table.results tbody tr > td:first-child{box-sizing:border-box;width:220px;min-width:180px;max-width:220px;white-space:normal;overflow-wrap:anywhere}
+    #content.with-mods #mods-section{grid-column:1;grid-row:4}
+    #table-controls{display:flex;align-items:center;gap:8px;min-height:28px;margin-bottom:8px;flex-wrap:wrap}
+    #table-controls #configPanel{margin-bottom:0}
+    #table-controls label{display:flex;align-items:center;gap:4px}
+    #table-controls select{box-sizing:border-box;height:28px;padding:3px 5px;border:1px solid var(--border);border-radius:4px;background:var(--panel-bg);color:var(--text)}
+    #sidebar-toggle-placeholder{box-sizing:border-box;flex:0 0 334px;height:40px}
+    .sidebar-header #search-control{position:relative;flex:1 1 0;width:0;min-width:0;margin-right:8px;height:28px}
+    #search-input-wrap{position:relative}
+    #search-input-wrap::before{position:absolute;top:50%;left:8px;width:14px;height:14px;transform:translateY(-50%);background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2399b3c8' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E");content:'';pointer-events:none}
+    #search-control #search-input{box-sizing:border-box;width:100%;height:28px;margin:0;padding:4px 28px 4px 28px}
+    #search-clear{position:absolute;top:50%;right:3px;transform:translateY(-50%);width:22px;height:22px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:17px;line-height:1;cursor:pointer}
+    #search-clear:hover{background:rgba(0,0,0,0.08);color:var(--text)}
+    #search-clear[hidden]{display:none}
+    #crit-dps-control{display:grid;width:100%;grid-template-columns:minmax(0,1fr);align-items:start;gap:6px}
+    #crit-dps-control .accuracy-control-stub{width:100%;height:auto;min-height:32px;align-items:flex-start;flex-wrap:nowrap}
+    #crit-dps-control .accuracy-settings{display:grid;min-width:0;flex:1 1 0;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:6px 8px;padding:0;animation:accuracy-settings-reveal 180ms ease-out}
+    #crit-dps-control .accuracy-settings.is-disabled{display:none}
+    #crit-dps-control .accuracy-settings label{display:flex;min-width:0;align-items:center;gap:4px;white-space:nowrap}
+    #crit-dps-control .accuracy-settings input{box-sizing:border-box;width:52px;min-width:0;height:24px;flex:1 1 46px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--panel-bg);color:var(--text)}
+    #crit-dps-control .control-stub{box-sizing:border-box;display:flex;width:max-content;max-width:100%;align-items:center;gap:8px;flex-wrap:wrap;min-height:32px;padding:3px 7px;border:1px solid var(--border);border-radius:4px;background:var(--panel-bg);line-height:1}
+    #crit-dps-control .control-stub.accuracy-control-stub{min-height:32px}
+    #crit-dps-control .control-stub-title{font-weight:600;color:var(--muted);white-space:nowrap}
+    #crit-dps-control .control-stub.accuracy-control-stub{align-items:center}
+    #crit-dps-control .crit-multiplier-control{gap:5px}
+    #crit-dps-control .accuracy-control{flex:0 0 auto;gap:5px;white-space:nowrap;font-weight:600}
+    #crit-dps-control input[type=range]{box-sizing:border-box;width:120px;height:20px;margin:0;vertical-align:middle}
+    #crit-dps-control input[type=checkbox]{box-sizing:border-box;width:14px;height:14px;margin:0;flex:0 0 14px}
+    #crit-dps-control output{min-width:38px}
+    @keyframes accuracy-settings-reveal{
+      from{opacity:0;transform:translateX(-8px)}
+      to{opacity:1;transform:translateX(0)}
+    }
+    @media (prefers-reduced-motion:reduce){
+      #crit-dps-control .accuracy-settings{animation:none}
+    }
+    @media (max-width:640px){
+      #content.with-mods #mods-section{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(220px,1fr)}
+      #content.with-mods #selected-mods-panel{grid-column:1;grid-row:1}
+      #content.with-mods #mod-selection-panel{grid-column:1;grid-row:2}
+    }
+    #search-suggestions{position:fixed;z-index:10010;box-sizing:border-box;width:var(--search-suggestions-width,360px);max-height:320px;overflow:auto;padding:4px;border:1px solid var(--panel-border);border-radius:4px;background:var(--panel-bg);box-shadow:0 6px 16px rgba(0,0,0,0.2)}
+    #search-suggestions[hidden]{display:none}
+    .search-suggestion{display:flex;width:100%;flex-direction:column;gap:2px;padding:7px 8px;border:0;border-radius:3px;background:transparent;color:var(--text);text-align:left;cursor:pointer}
+    .search-suggestion:hover,.search-suggestion:focus{outline:none;background:rgba(74,144,226,0.16)}
+    .search-suggestion-category{font-size:0.8em;color:var(--muted)}
+    .search-no-results{padding:8px;color:var(--muted);font-size:0.9em}
+    #sidebar-toggle{box-sizing:border-box;display:flex;width:86px;height:40px;align-items:center;gap:8px;padding:0 10px;border:0;border-radius:5px;background:transparent;color:var(--text);font-size:0.95em;font-weight:700;cursor:pointer;white-space:nowrap}
+    #sidebar-toggle .sidebar-icon{font-size:20px;font-weight:400;line-height:1}
+    #sidebar-toggle:hover,#sidebar-toggle[aria-expanded=true]{background:rgba(0,0,0,0.08)}
+    @media (prefers-reduced-motion:reduce){
+      #filters,#sidebar-content,#content{transition:none}
+    }
+    
+    #mods-section{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr);gap:12px;grid-column:1;grid-row:3;min-width:0;min-height:0;overflow:hidden}
+    #mods-header{font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    #mods-section #mods-header{display:none}
+    #mods-title{font-size:1.05em;font-weight:600}
+    #selected-mods-panel,#mod-selection-panel{box-sizing:border-box;min-width:0;min-height:0;margin:0;padding:10px;border:1px solid var(--border);border-radius:4px;background:rgba(0,0,0,0.04);font-size:0.85em;overflow:auto}
+    #selected-mods-panel{grid-column:1;grid-row:1;display:flex;flex-direction:column}
+    #mod-selection-panel{grid-column:2;grid-row:1;display:flex;flex-direction:column}
+    #mod-selection-title{margin:0 0 10px;font-size:0.95em}
+    .selected-mod-group{margin-bottom:10px}
+    .selected-mod-group:last-child{margin-bottom:0}
+    .selected-mod-count{font-weight:600;color:var(--accent);margin-bottom:6px}
+    .selected-mod-list{display:flex;flex-direction:column;gap:4px}
+    .mods-container{box-sizing:border-box;overflow:auto;flex:1;min-width:0;min-height:0;padding-right:12px;display:block}
+    .mods-column{flex:1;min-width:0}
+    .mod-tag-filter-row{box-sizing:border-box;display:flex;width:100%;min-width:0;align-items:center;gap:6px;flex-wrap:wrap;margin:-2px 0 10px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;background:var(--panel-bg)}
+    .mod-tag-filter-toggle{display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:3px 7px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text);font:inherit;font-size:.8em;line-height:1;cursor:pointer}
+    .mod-tag-filter-toggle:hover{background:rgba(0,0,0,.06)}
+    .mod-tag-filter-toggle[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:white}
+    .mod-tag-filter-toggle:disabled{cursor:not-allowed;opacity:.45}
+    .mod-tag-filter-toggle:focus-visible,.mod-tag-filter-clear:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .mod-tag-filter-count{margin-left:2px;color:var(--muted);font-size:.85em}
+    .mod-tag-filter-toggle[aria-pressed="true"] .mod-tag-filter-count{color:inherit;opacity:.85}
+    .mod-tag-filter-clear{min-height:26px;padding:3px 7px;border:0;border-radius:4px;background:transparent;color:var(--accent);font:inherit;font-size:.8em;cursor:pointer}
+    .mod-tag-filter-clear:disabled{color:var(--muted);cursor:default;opacity:.65}
+    .cluster-subtype-control{display:grid;gap:6px;margin:0 0 10px;padding:7px;border:1px solid var(--border);border-radius:4px;background:var(--panel-bg)}
+    .cluster-subtype-label{font-size:.82em;font-weight:600}
+    .cluster-subtype-options{display:flex;flex-wrap:wrap;gap:5px}
+    .cluster-subtype-toggle{min-height:28px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text);font:inherit;font-size:.8em;cursor:pointer}
+    .cluster-subtype-toggle:hover{background:rgba(0,0,0,.06)}
+    .cluster-subtype-toggle[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:white}
+    .cluster-subtype-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .mod-selection-notice{margin:0 0 10px;padding:8px 10px;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:4px;background:var(--panel-bg);color:var(--text);font-size:.85em}
+    .mod-selection-notice[hidden]{display:none}
+    .mod-tabs{box-sizing:border-box;display:flex;width:100%;min-width:0;align-items:center;gap:4px;margin:0 0 8px;padding:3px;border:1px solid var(--border);border-radius:5px;background:var(--panel-bg)}
+    .mod-tab{flex:1 1 0;padding:6px 10px;border:0;border-radius:3px;background:transparent;color:var(--text);font:inherit;text-align:center;cursor:pointer;white-space:nowrap}
+    .mod-tab[aria-selected="true"]{background:var(--accent);color:white}
+    .mod-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .mod-tab-panel[hidden]{display:none}
+    
+    .mod-section{margin-bottom:16px}
+    .mod-section-title{font-weight:700;font-size:0.95em;padding:8px;border-bottom:2px solid var(--accent);color:var(--accent);margin-bottom:0;background:rgba(0,0,0,0.05);border-radius:4px;user-select:none;cursor:pointer;display:flex;align-items:center;gap:8px}
+    .mod-section-title:hover{background:rgba(0,0,0,0.08)}
+    .mod-section-toggle{display:inline-block;min-width:12px;text-align:center;font-size:0.8em}
+    .mod-section-content{display:none;padding:8px 0;}
+    .cluster-notables{margin-bottom:14px}
+    .cluster-notables-title{margin:0 0 6px;padding:6px 8px;border-bottom:1px solid var(--border);font-size:.9em;font-weight:700;color:var(--accent)}
+    .cluster-notables-list{display:grid;gap:4px}
+    
+    .mod-group{margin-bottom:12px;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+    .mod-group-header{padding:8px 10px;background:rgba(0,0,0,0.05);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.15s;user-select:none;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+    .mod-group-header:hover{background:rgba(0,0,0,0.08)}
+    .mod-group-toggle{display:inline-block;min-width:12px;text-align:center;font-size:0.8em}
+    .mod-group-name{flex:1;font-weight:600;font-size:0.95em}
+    .mod-group-count{font-size:0.8em;color:var(--muted);background:rgba(0,0,0,0.1);padding:2px 6px;border-radius:3px}
+    .mod-group-matched{font-size:0.8em;color:var(--muted);margin-left:auto}
+    .mod-group-content{padding:8px 10px;display:block}
+    
+    .mod-card{padding:4px 8px;margin-bottom:4px;border:1px solid transparent;border-radius:4px;background:transparent}
+    .mod-card.is-selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent)}
+    .mod-card.is-selected .mod-card-text{font-weight:600}
+    .mod-locality{display:inline-block;margin-right:6px;padding:2px 5px;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-size:.78em;font-style:normal;font-weight:600;white-space:nowrap}
+    .mod-locality[data-locality="local"]{border-color:var(--match);color:var(--match)}
+    .mod-locality[data-locality="mixed"]{border-color:var(--accent);color:var(--accent)}
+    .mod-select-btn.is-selected{border-color:var(--accent)!important;background:var(--accent)!important;color:#fff!important}
+    .mod-name{font-weight:600;color:var(--text);font-size:0.9em}
+    .mod-text{font-size:0.85em;margin-top:3px;font-style:italic;color:var(--muted)}
+    
+    .app-error{margin:12px;padding:10px;border:1px solid #c44;border-radius:4px;color:#b22}
+    .app-error[hidden]{display:none}
+    
+    .panel::-webkit-scrollbar { width:12px; }
+    .panel::-webkit-scrollbar-track { background:transparent;border-radius:0 6px 6px 0; }
+    .panel::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.12);border-radius:0 6px 6px 0;min-height:28px;border-left:3px solid transparent;background-clip:padding-box; }
+    @media (prefers-color-scheme: dark){
+      .panel::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.10); }
+    }
+  </style>
+</head>
+<body>
+  <div id="app-error" class="app-error" role="alert" hidden></div>
+
+  <div class="cols">
+    <div id="content" class="panel with-mods">
+      <div class="panel" id="filters">
+        <div class="sidebar-header">
+          <button id="sidebar-toggle" type="button" aria-label="Open Items menu" aria-controls="filters" aria-expanded="false"><span class="sidebar-icon" aria-hidden="true">☰</span><span>Items</span></button>
+          <div id="search-control">
+            <div id="search-input-wrap">
+              <input id="search-input" type="text" placeholder="" aria-label="Search items" role="combobox" aria-autocomplete="list" aria-controls="search-suggestions" aria-expanded="false" />
+              <button id="search-clear" type="button" aria-label="Clear search" hidden>×</button>
+            </div>
+            <div id="search-suggestions" role="listbox" aria-label="Matching items" hidden></div>
+          </div>
+        </div>
+        <div id="sidebar-content">
+          <div id="categoryGroups"></div>
+        </div>
+      </div>
+      <div id="table-controls">
+        <div id="sidebar-toggle-placeholder" aria-hidden="true"></div>
+        <div id="configPanel" class="config-panel">
+          <label for="qualityRange">Quality</label>
+          <input id="qualityRange" type="range" min="0" max="30" step="1" value="0" />
+          <input id="qualityNumber" type="number" min="0" max="30" step="1" value="0" style="width:52px" />
+          <span>%</span>
+        </div>
+        <div id="crit-dps-control">        </div>
+      </div>
+      <div id="table-results"></div>
+      <div id="table-resize-handle" role="separator" aria-label="Resize item table" aria-orientation="horizontal" aria-valuemin="120" aria-valuenow="30" tabindex="0"></div>
+      <div id="mods-section">
+        <section id="selected-mods-panel" aria-label="Selected modifiers">
+          <div id="mods-title"></div>
+          <div id="selected-prefixes" class="selected-mod-group">
+            <div id="selected-prefixes-count" class="selected-mod-count">Prefixes (0/3)</div>
+            <div id="selected-prefixes-list" class="selected-mod-list"></div>
+          </div>
+          <div id="selected-suffixes" class="selected-mod-group">
+            <div id="selected-suffixes-count" class="selected-mod-count">Suffixes (0/3)</div>
+            <div id="selected-suffixes-list" class="selected-mod-list"></div>
+          </div>
+        </section>
+        <div id="mod-selection-panel">
+          <h3 id="mod-selection-title">Modifiers</h3>
+          <div id="mod-selection-notice" class="mod-selection-notice" role="status" aria-live="polite" hidden></div>
+          <div id="mod-calculations" style="margin-bottom:12px;padding:8px;background:rgba(0,0,0,0.05);border-radius:4px;display:none">
+            <div style="font-weight:600;margin-bottom:8px;color:var(--accent)">Stats</div>
+            <div id="mod-calcs-content" style="font-size:0.85em;display:flex;flex-direction:column;gap:4px"></div>
+          </div>
+          <div class="mods-container" id="mods-container"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allItems = [];
+    let allMods = [];
+    let modsById = new Map();
+    let modsByBaseId = new Map();
+    let itemsWithMods = new Set();
+    let categoryModAvailability = new Map();
+    let statDefinitionsById = new Map();
+    let clusterJewelsByBaseId = new Map();
+    let selectedItem = null;
+    let sortKey = null;
+    let sortDir = 1;
+    let currentModAvailability = 'with';
+    let selectedMods = { prefixes: {}, suffixes: {} };
+    let itemClasses = {};
+    let currentCategory = 'One Hand Sword';
+    let includeCritInDps = false;
+    let critMultiplierPercent = 150;
+    let enableAccuracy = false;
+    let characterLevel = 90;
+    let characterDexterity = 100;
+    let monsterLevel = 83;
+    let accuracyOverride = null;
+    let evasionOverride = null;
+    let activeModTab = 'prefixes';
+    let activeModTagFilters = new Set();
+    let modTagFilterBaseId = null;
+    let activeClusterSubtypeId = null;
+    let clusterSubtypeBaseId = null;
+    const openModGroups = new Map();
+
+    const weaponClasses = new Set([
+      'Bow', 'Claw', 'Dagger', 'Rune Dagger', 'One Hand Axe', 'One Hand Mace',
+      'One Hand Sword', 'Thrusting One Hand Sword', 'Sceptre', 'Staff', 'Warstaff',
+      'Two Hand Axe', 'Two Hand Mace', 'Two Hand Sword', 'Wand', 'Quiver'
+    ]);
+    const armourClasses = new Set(['Body Armour', 'Boots', 'Gloves', 'Helmet', 'Shield']);
+
+    function isDntItem(item){
+      const hasDntTag = Array.isArray(item.tags) && item.tags.some(tag => String(tag).toUpperCase() === 'DNT');
+      return hasDntTag || /^\[DNT(?:\s*[-\]])/i.test(item.name || '');
+    }
+
+    function getSidebarGroup(classKey, info){
+      const category = info.category || '';
+      if(weaponClasses.has(classKey)){
+        if(['Two Hand Axe', 'Two Hand Mace', 'Two Hand Sword', 'Staff'].includes(category)) return 'Two-Handed Weapons';
+        if(['Bow', 'Quiver'].includes(category)) return 'Ranged Weapons';
+        return 'One-Handed Weapons';
+      }
+      if(armourClasses.has(classKey)) return 'Armour';
+      if(['Amulet', 'Ring', 'Belt'].includes(category)) return 'Jewellery';
+      if(['Jewel', 'Abyss Jewel'].includes(category)) return 'Jewels & Abyss Jewels';
+      if(['Flask', 'Tincture'].includes(category)) return 'Flasks & Tinctures';
+      return category || info.category_id || info.name || classKey;
+    }
+
+    function getClassLabel(classKey, info){
+      if(classKey === 'Cluster Jewel') return 'Cluster Jewels';
+      const labels = {
+        MapKey: 'Map Keys',
+        IncubatorStackable: 'Stackable Incubators'
+      };
+      if(labels[classKey]) return labels[classKey];
+      if(info.name) return info.name;
+      return classKey.replace(/([a-z])([A-Z])/g, '$1 $2');
+    }
+
+    function renderCategoryGroups(){
+      const sections = new Map([
+        ['with', new Map()],
+        ['without', new Map()]
+      ]);
+      const entriesByKey = new Map();
+      for(const item of allItems){
+        const categoryKey = getItemCategory(item);
+        const info = itemClasses[categoryKey] || itemClasses[item.item_class] || {};
+        const groupName = getSidebarGroup(categoryKey, info);
+        let entry = entriesByKey.get(categoryKey);
+        if(!entry){
+          entry = {
+            key: categoryKey,
+            name: getClassLabel(categoryKey, info),
+            groupName,
+            withMods: 0,
+            withoutMods: 0
+          };
+          entriesByKey.set(categoryKey, entry);
+        }
+        entry[itemsWithMods.has(item.id.toLowerCase()) ? 'withMods' : 'withoutMods']++;
+      }
+
+      categoryModAvailability = new Map();
+      for(const entry of entriesByKey.values()){
+        entry.availability = entry.withoutMods > entry.withMods ? 'without' : 'with';
+        categoryModAvailability.set(entry.key, entry.availability);
+        const groups = sections.get(entry.availability);
+        if(!groups.has(entry.groupName)) groups.set(entry.groupName, []);
+        groups.get(entry.groupName).push(entry);
+      }
+
+      const preservedGroupOrder = [
+        'One-Handed Weapons', 'Two-Handed Weapons', 'Ranged Weapons', 'Armour',
+        'Jewellery', 'Jewels & Abyss Jewels', 'Flasks & Tinctures'
+      ];
+      const container = document.getElementById('categoryGroups');
+      container.replaceChildren();
+      let firstGroup = true;
+      for(const [availability, groups] of sections){
+        if(groups.size === 0) continue;
+        const section = document.createElement('section');
+        section.className = 'category-section';
+        const sectionTitle = document.createElement('div');
+        sectionTitle.className = 'category-section-title';
+        sectionTitle.textContent = availability === 'with' ? 'Modifiable' : 'No modifiers';
+        section.appendChild(sectionTitle);
+
+        const groupOrder = [
+          ...preservedGroupOrder.filter(groupName => groups.has(groupName)),
+          ...Array.from(groups.keys())
+            .filter(groupName => !preservedGroupOrder.includes(groupName))
+            .sort((a, b) => a.localeCompare(b))
+        ];
+        for(const groupName of groupOrder){
+          const entries = groups.get(groupName);
+          if(!entries || entries.length === 0) continue;
+          entries.sort((a, b) => a.name.localeCompare(b.name) || a.key.localeCompare(b.key));
+          const group = document.createElement('div');
+          group.className = `category-group${firstGroup ? '' : ' collapsed'}`;
+          const title = document.createElement('div');
+          title.className = `category-group-title${firstGroup ? '' : ' collapsed'}`;
+          title.textContent = groupName;
+          title.addEventListener('click', () => {
+            const isCollapsed = group.classList.contains('collapsed');
+            document.querySelectorAll('.category-group').forEach(other => {
+              other.classList.add('collapsed');
+              other.querySelector('.category-group-title').classList.add('collapsed');
+            });
+            if(isCollapsed){
+              group.classList.remove('collapsed');
+              title.classList.remove('collapsed');
+            }
+          });
+          const buttons = document.createElement('div');
+          buttons.className = 'category-buttons';
+          for(const entry of entries){
+            const button = document.createElement('button');
+            button.className = `cat-btn${entry.key === currentCategory && entry.availability === currentModAvailability ? ' active' : ''}`;
+            button.dataset.category = entry.key;
+            button.dataset.modAvailability = entry.availability;
+            button.textContent = entry.name;
+            buttons.appendChild(button);
+          }
+          group.append(title, buttons);
+          section.appendChild(group);
+          firstGroup = false;
+        }
+        container.appendChild(section);
+      }
+      updateSidebarWidth();
+    }
+
+    function updateSidebarWidth(){
+      const sidebar = document.getElementById('filters');
+      const titles = Array.from(document.querySelectorAll('.category-group-title'));
+      const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      let widestTitle = 0;
+      for(const title of titles){
+        const style = getComputedStyle(title);
+        context.font = style.font;
+        widestTitle = Math.max(widestTitle, context.measureText(title.textContent || '').width);
+      }
+      const titleWidth = widestTitle + 12 + 18 + 2;
+      const widestButton = buttons.reduce((width, button) =>
+        Math.max(width, button.getBoundingClientRect().width), 0);
+      const maxWidth = Math.min(480, window.innerWidth - 32);
+      const headerWidth = document.getElementById('sidebar-toggle').getBoundingClientRect().width + 8 + 96 + 8 + 2;
+      const sidebarWidth = Math.min(maxWidth, Math.ceil(Math.max(titleWidth, widestButton + 26, headerWidth)));
+      sidebar.style.setProperty('--sidebar-width', sidebarWidth + 'px');
+      document.documentElement.style.setProperty('--sidebar-width', sidebarWidth + 'px');
+      sidebar.style.setProperty('--search-open-width', maxWidth + 'px');
+      document.documentElement.style.setProperty('--search-open-width', maxWidth + 'px');
+    }
+
+    const columnHeaderMap = {
+      energy_shield: 'ES',
+      armour: 'Arm',
+      armor: 'Arm',
+      evasion: 'Eva',
+      critical_strike_chance: 'Crit Chance',
+      accuracy_rating: 'Acc',
+      hit_chance: 'Hit %',
+      attack_time: 'APS',
+      physical_damage: 'Phys',
+      chaos_damage: 'Chaos Damage',
+      dps: 'pDPS',
+      edps: 'eDPS',
+      range: 'Range (Metres)',
+    };
+
+    function prettyHeader(s){
+      if(!s) return s;
+      if(columnHeaderMap[s]) return columnHeaderMap[s];
+      return String(s).split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+    }
+
+    function prettyHeaderHtml(s){
+      return escapeHtml(prettyHeader(s)).replace(/ (?=[A-Za-z(])/g, '<br>');
+    }
+
+    function renderSortableHeaderHtml(labelHtml, isActive, sortIndicator){
+      const marker = isActive ? sortIndicator.trim() : '&nbsp;';
+      const firstWordMatch = labelHtml.match(/^([^<\s]+)([\s\S]*)$/);
+      if(!firstWordMatch) return labelHtml;
+      return firstWordMatch[1] +
+        '<span class="table-sort-indicator" aria-hidden="true">' + marker + '</span>' +
+        firstWordMatch[2];
+    }
+
+    function applyQuality(propName, rawVal){
+      try{
+        if(rawVal === null || rawVal === undefined || rawVal === '') return rawVal;
+        const q = Number(window.qualityPercent || 0);
+        if(!q) return rawVal;
+        if(!propName) return rawVal;
+        const base = propName.toString();
+        const targets = new Set(['armour','energy_shield','evasion','physical_damage']);
+        if(!targets.has(base)) return rawVal;
+        const n = Number(rawVal);
+        if(isNaN(n)) return rawVal;
+        return Math.round(n * (1 + q/100));
+      }catch(e){ return rawVal; }
+    }
+
+    function formatPropertyValue(propName, rawVal){
+      let out = applyQuality(propName, rawVal);
+      if(propName === 'attack_time' && out !== null && out !== undefined && out !== ''){
+        const n = Number(out);
+        if(!isNaN(n) && n > 0){
+          out = (1000 / n).toFixed(2);
+        }
+      }
+      if(propName === 'range' && out !== null && out !== undefined && out !== ''){
+        const n = Number(out);
+        if(Number.isFinite(n)){
+          out = (n / 10).toFixed(1);
+        }
+      }
+      if(propName === 'critical_strike_chance' && out !== null && out !== undefined && out !== ''){
+        const n = Number(out);
+        if(!isNaN(n)){
+          out = (n / 100).toFixed(2) + '%';
+        }
+      }
+      return out;
+    }
+
+    function getSelectedStatRollRange(statIds){
+      const acceptedIds = new Set(statIds);
+      let min = 0;
+      let max = 0;
+      if(!selectedItem) return { min, max };
+      for(const typeKey of ['prefixes','suffixes']){
+        for(const mod of Object.values(selectedMods[typeKey])){
+          for(const stat of mod.stats || []){
+            if(!acceptedIds.has(stat.id)) continue;
+            const values = [Number(stat.min), Number(stat.max)].filter(Number.isFinite);
+            if(values.length === 0) continue;
+            min += Math.min(...values);
+            max += Math.max(...values);
+          }
+        }
+      }
+      return { min, max };
+    }
+
+    function hasSelectedLocalChaosDamage(){
+      const localChaosDamageStatIds = new Set([
+        'local_minimum_added_chaos_damage',
+        'local_maximum_added_chaos_damage'
+      ]);
+      return ['prefixes','suffixes'].some(typeKey =>
+        Object.values(selectedMods[typeKey]).some(mod =>
+          (mod.stats || []).some(stat => localChaosDamageStatIds.has(stat.id))
+        )
+      );
+    }
+
+    function formatSelectedLocalChaosDamage(item, endpoint){
+      if(!selectedItem || selectedItem.id !== item.id) return '';
+      const statId = endpoint === 'min'
+        ? 'local_minimum_added_chaos_damage'
+        : 'local_maximum_added_chaos_damage';
+      const range = getSelectedStatRollRange([statId]);
+      if(range.min === range.max) return String(range.min);
+      return '<span class="range-highlight">' + range.max + '-' + range.min + '</span>';
+    }
+
+    function getWeaponModifierStatRollRange(item, matchesStatId){
+      let min = 0;
+      let max = 0;
+      const modifiers = getImplicitIds(item)
+        .map(implicitId => modsById.get(implicitId))
+        .filter(Boolean);
+      if(selectedItem && selectedItem.id === item.id){
+        modifiers.push(...Object.values(selectedMods.prefixes), ...Object.values(selectedMods.suffixes));
+      }
+      for(const mod of modifiers){
+        for(const stat of mod.stats || []){
+          if(!matchesStatId(stat.id)) continue;
+          const values = [Number(stat.min), Number(stat.max)].filter(Number.isFinite);
+          if(values.length === 0) continue;
+          min += Math.min(...values);
+          max += Math.max(...values);
+        }
+      }
+      return { min, max };
+    }
+
+    function getBlockChanceRange(item, blockType){
+      const itemClass = item.item_class;
+      const isShield = itemClass === 'Shield';
+      const isStaff = itemClass === 'Staff' || itemClass === 'Warstaff';
+      if(!isShield && !isStaff) return null;
+
+      const isAttackBlock = blockType === 'attack_block';
+      const rawBlock = isAttackBlock && isShield && item.properties
+        ? item.properties.block
+        : null;
+      const parsedBaseBlock = rawBlock === null || rawBlock === undefined || rawBlock === ''
+        ? null
+        : Number(rawBlock);
+      const hasBaseBlock = parsedBaseBlock !== null && Number.isFinite(parsedBaseBlock);
+      const baseBlock = hasBaseBlock ? parsedBaseBlock : 0;
+      const flatBlockRange = getWeaponModifierStatRollRange(item, statId =>
+        isAttackBlock
+          ? statId === 'additional_block_%' ||
+            (isStaff && (
+              statId === 'staff_block_%' ||
+              statId === 'additional_staff_block_%'
+            )) ||
+            (isShield && statId === 'shield_block_%')
+          : statId === 'additional_spell_block_%' || statId === 'base_spell_block_%'
+      );
+      const increasedBlockRange = getWeaponModifierStatRollRange(
+        item,
+        statId => isAttackBlock && statId === 'local_block_chance_+%'
+      );
+      if(!hasBaseBlock && flatBlockRange.min === 0 && flatBlockRange.max === 0) return null;
+
+      const values = [flatBlockRange.min, flatBlockRange.max].flatMap(flat =>
+        [increasedBlockRange.min, increasedBlockRange.max].map(increased =>
+          baseBlock * (1 + increased / 100) + flat
+        )
+      );
+      return { min: Math.min(...values), max: Math.max(...values) };
+    }
+
+    function formatBlockChance(item, blockType){
+      const range = getBlockChanceRange(item, blockType);
+      if(!range) return '';
+      const format = value => Number.isInteger(value) ? String(value) : value.toFixed(1);
+      if(range.min !== range.max){
+        return '<span class="range-highlight">' + format(range.max) + '-' + format(range.min) + '</span>';
+      }
+      return format(range.min);
+    }
+
+    function getWeaponElementalDamageRollRange(item){
+      const localFlatRange = endpoint => getWeaponModifierStatRollRange(
+        item,
+        statId => new RegExp('^local_' + endpoint + '_added_(?:fire|cold|lightning)_damage$').test(statId)
+      );
+      const attackFlatRange = endpoint => getWeaponModifierStatRollRange(
+        item,
+        statId => new RegExp('^(?:attack|spell_and_attack)_' + endpoint +
+          '_added_(?:fire|cold|lightning)_damage(?:_with_[a-z_]+)?$').test(statId)
+      );
+      const localIncreaseRange = getWeaponModifierStatRollRange(
+        item,
+        statId => statId === 'local_elemental_damage_+%'
+      );
+      const globalIncreaseRange = getWeaponModifierStatRollRange(
+        item,
+        statId => statId === 'elemental_damage_+%' ||
+          statId === 'elemental_damage_with_attack_skills_+%' ||
+          statId === 'local_attacks_with_this_weapon_elemental_damage_+%'
+      );
+      const localMinRange = localFlatRange('minimum');
+      const localMaxRange = localFlatRange('maximum');
+      const attackMinRange = attackFlatRange('minimum');
+      const attackMaxRange = attackFlatRange('maximum');
+      const values = [localMinRange.min, localMinRange.max].flatMap(localMin =>
+        [localMaxRange.min, localMaxRange.max].flatMap(localMax =>
+          [attackMinRange.min, attackMinRange.max].flatMap(attackMin =>
+            [attackMaxRange.min, attackMaxRange.max].flatMap(attackMax =>
+              [localIncreaseRange.min, localIncreaseRange.max].flatMap(localIncrease =>
+                [globalIncreaseRange.min, globalIncreaseRange.max].map(globalIncrease =>
+                  ((Math.round(localMin * (1 + localIncrease / 100)) +
+                    Math.round(localMax * (1 + localIncrease / 100)) +
+                    attackMin + attackMax) / 2) * (1 + globalIncrease / 100)
+                )
+              )
+            )
+          )
+        )
+      );
+      return { min: Math.min(...values), max: Math.max(...values) };
+    }
+
+    function getWeaponAccuracyInfo(item){
+      const estimatedEvasion = (50 + 16 * monsterLevel) * Math.pow(1.0212, monsterLevel);
+      const evasion = evasionOverride === null ? estimatedEvasion : evasionOverride;
+      const flatAccuracyRange = getWeaponModifierStatRollRange(
+        item,
+        statId => statId === 'accuracy_rating' || statId === 'local_accuracy_rating'
+      );
+      const weaponAccuracyStat = {
+        'Bow': 'bow',
+        'Claw': 'claw',
+        'Dagger': 'dagger',
+        'Rune Dagger': 'dagger',
+        'One Hand Axe': 'axe',
+        'Two Hand Axe': 'axe',
+        'One Hand Mace': 'mace',
+        'Two Hand Mace': 'mace',
+        'One Hand Sword': 'sword',
+        'Thrusting One Hand Sword': 'sword',
+        'Two Hand Sword': 'sword',
+        'Staff': 'staff',
+        'Warstaff': 'staff',
+        'Wand': 'wand'
+      }[item.item_class];
+      const increasedAccuracyRange = getWeaponModifierStatRollRange(
+        item,
+        statId => statId === 'accuracy_rating_+%' ||
+          (weaponAccuracyStat !== undefined && statId === weaponAccuracyStat + '_accuracy_rating_+%')
+      );
+      const characterAccuracy = accuracyOverride === null
+        ? 2 * (characterLevel + characterDexterity)
+        : accuracyOverride;
+      const accuracyValues = [
+        flatAccuracyRange.min,
+        flatAccuracyRange.max
+      ].flatMap(flatAccuracy =>
+        [increasedAccuracyRange.min, increasedAccuracyRange.max].map(increasedAccuracy =>
+          Math.max(0, (characterAccuracy + flatAccuracy) * (1 + increasedAccuracy / 100))
+        )
+      );
+      const minAccuracy = Math.min(...accuracyValues);
+      const maxAccuracy = Math.max(...accuracyValues);
+      const chanceToHit = accuracy => Math.min(1, Math.max(
+        0.05,
+        (1.25 * accuracy) / (accuracy + Math.pow(evasion / 5, 0.9))
+      ));
+      return {
+        minAccuracy,
+        maxAccuracy,
+        evasion,
+        minChance: chanceToHit(minAccuracy),
+        maxChance: chanceToHit(maxAccuracy)
+      };
+    }
+
+    function calculateExpectedWeaponDpsRange(item, baseDpsRange){
+      const accuracyInfo = getWeaponAccuracyInfo(item);
+      const hitChances = enableAccuracy
+        ? [accuracyInfo.minChance, accuracyInfo.maxChance]
+        : [1];
+      const critChanceRaw = item.properties && item.properties.critical_strike_chance;
+      const includeCrit = includeCritInDps &&
+        critChanceRaw !== null && critChanceRaw !== undefined && critChanceRaw !== '';
+      let critChances = [0];
+      let critMultipliers = [150];
+      if(includeCrit){
+        const implicitCritRange = getLocalImplicitCritRange(item);
+        const implicitCritMultiplierRange = getGlobalImplicitCritMultiplierRange(item);
+        const baseCritChance = Number(critChanceRaw) / 100;
+        const selectedCritRange = selectedItem && selectedItem.id === item.id
+          ? getSelectedStatRollRange(['local_critical_strike_chance_+%'])
+          : { min: 0, max: 0 };
+        const implicitCritChance = implicitCritRange?.max || 0;
+        critChances = [
+          baseCritChance * (1 + (implicitCritChance + selectedCritRange.min) / 100),
+          baseCritChance * (1 + (implicitCritChance + selectedCritRange.max) / 100)
+        ];
+        const selectedCritMultiplierRange = selectedItem && selectedItem.id === item.id
+          ? getSelectedStatRollRange(['base_critical_strike_multiplier_+'])
+          : { min: 0, max: 0 };
+        const implicitCritMultiplier = implicitCritMultiplierRange?.max || 0;
+        critMultipliers = [
+          critMultiplierPercent + implicitCritMultiplier + selectedCritMultiplierRange.min,
+          critMultiplierPercent + implicitCritMultiplier + selectedCritMultiplierRange.max
+        ];
+      }
+      const values = [baseDpsRange.min, baseDpsRange.max].flatMap(dps =>
+        hitChances.flatMap(hitChance => {
+          if(!includeCrit) return [dps * hitChance];
+          return critChances.flatMap(critChance =>
+            critMultipliers.map(critMultiplier =>
+              dps * hitChance * (
+                1 + (Math.min(Math.max(critChance, 0), 100) / 100) *
+                  hitChance * (critMultiplier / 100 - 1)
+              )
+            )
+          );
+        })
+      );
+      return { min: Math.min(...values), max: Math.max(...values) };
+    }
+
+    function formatWeaponAccuracy(item){
+      const accuracyInfo = getWeaponAccuracyInfo(item);
+      return accuracyInfo.minAccuracy === accuracyInfo.maxAccuracy
+        ? Math.round(accuracyInfo.minAccuracy).toLocaleString()
+        : Math.round(accuracyInfo.maxAccuracy).toLocaleString() + '-' +
+          Math.round(accuracyInfo.minAccuracy).toLocaleString();
+    }
+
+    function formatHitChance(item){
+      const accuracyInfo = getWeaponAccuracyInfo(item);
+      const min = accuracyInfo.minChance * 100;
+      const max = accuracyInfo.maxChance * 100;
+      return min === max ? min.toFixed(1) + '%' : max.toFixed(1) + '-' + min.toFixed(1) + '%';
+    }
+
+    function calculatePhysicalDamageRange(item, endpoint){
+      const rawValue = item.properties && item.properties['physical_damage_' + endpoint];
+      if(rawValue === null || rawValue === undefined || rawValue === '') return null;
+      const baseValue = Number(rawValue);
+      if(!Number.isFinite(baseValue)) return null;
+
+      const flatStatId = endpoint === 'min'
+        ? 'local_minimum_added_physical_damage'
+        : 'local_maximum_added_physical_damage';
+      const flatRange = selectedItem && selectedItem.id === item.id
+        ? getSelectedStatRollRange([flatStatId])
+        : { min: 0, max: 0 };
+      const increasedRange = selectedItem && selectedItem.id === item.id
+        ? getSelectedStatRollRange(['local_physical_damage_+%'])
+        : { min: 0, max: 0 };
+      const quality = Number(window.qualityPercent || 0);
+      const values = [flatRange.min, flatRange.max].flatMap(flat =>
+        [increasedRange.min, increasedRange.max].map(increased =>
+          Math.round((baseValue + flat) * (1 + (quality + increased) / 100))
+        )
+      );
+      return { min: Math.min(...values), max: Math.max(...values) };
+    }
+
+    function formatModifiedPhysicalDamage(item, endpoint, rawValue){
+      if(!selectedItem || selectedItem.id !== item.id){
+        return formatValue(formatPropertyValue('physical_damage', rawValue));
+      }
+      const range = calculatePhysicalDamageRange(item, endpoint);
+      if(!range) return '';
+      if(range.min !== range.max){
+        return '<span class="range-highlight">' + range.max + '-' + range.min + '</span>';
+      }
+      return String(range.min);
+    }
+
+    function applyModsToFormattedValue(item, propName, formattedVal){
+      // Apply mods to already-formatted values
+      if(!selectedItem || selectedItem.id !== item.id) return formattedVal;
+      
+      // For APS (converted from attack_time)
+      if(propName === 'attack_time'){
+        const attackTime = Number(item.properties && item.properties.attack_time);
+        if(!Number.isFinite(attackTime) || attackTime <= 0) return formattedVal;
+        const baseAps = 1000 / attackTime;
+        const speedRange = getSelectedStatRollRange(['local_attack_speed_+%']);
+        const lowAps = baseAps * (1 + speedRange.min / 100);
+        const highAps = baseAps * (1 + speedRange.max / 100);
+        return lowAps === highAps
+          ? lowAps.toFixed(2)
+          : highAps.toFixed(2) + '-' + lowAps.toFixed(2);
+      }
+      
+      if(propName === 'critical_strike_chance'){
+        return formattedVal;
+      }
+      
+      return formattedVal;
+    }
+
+    function applyCritToDpsRange(item, baseDpsRange){
+      return calculateExpectedWeaponDpsRange(item, baseDpsRange);
+    }
+
+    function calculateWeaponDpsRange(item){
+      const properties = item.properties || {};
+      const attackTime = Number(properties.attack_time);
+      if(!Number.isFinite(attackTime) || attackTime <= 0) return null;
+      const physicalMin = calculatePhysicalDamageRange(item, 'min');
+      const physicalMax = calculatePhysicalDamageRange(item, 'max');
+      const baseAps = 1000 / attackTime;
+      const attackSpeedRange = selectedItem && selectedItem.id === item.id
+        ? getSelectedStatRollRange(['local_attack_speed_+%'])
+        : { min: 0, max: 0 };
+      const apsValues = [
+        baseAps * (1 + attackSpeedRange.min / 100),
+        baseAps * (1 + attackSpeedRange.max / 100)
+      ];
+      if(!physicalMin || !physicalMax || !apsValues.every(value => Number.isFinite(value) && value > 0)){
+        return null;
+      }
+      const baseDpsValues = [physicalMin.min, physicalMin.max].flatMap(min =>
+        [physicalMax.min, physicalMax.max].flatMap(max =>
+          apsValues.map(aps => ((min + max) / 2) * aps)
+        )
+      );
+      return applyCritToDpsRange(item, {
+        min: Math.min(...baseDpsValues),
+        max: Math.max(...baseDpsValues)
+      });
+    }
+
+    function calculateWeaponElementalDpsRange(item){
+      const attackTime = Number(item.properties && item.properties.attack_time);
+      if(!Number.isFinite(attackTime) || attackTime <= 0) return null;
+      const damageRange = getWeaponElementalDamageRollRange(item);
+      const baseAps = 1000 / attackTime;
+      const attackSpeedRange = selectedItem && selectedItem.id === item.id
+        ? getSelectedStatRollRange(['local_attack_speed_+%'])
+        : { min: 0, max: 0 };
+      const apsValues = [
+        baseAps * (1 + attackSpeedRange.min / 100),
+        baseAps * (1 + attackSpeedRange.max / 100)
+      ];
+      if(!apsValues.every(value => Number.isFinite(value) && value > 0)) return null;
+      const baseDpsValues = [damageRange.min, damageRange.max].flatMap(damage =>
+        apsValues.map(aps => damage * aps)
+      );
+      return applyCritToDpsRange(item, {
+        min: Math.min(...baseDpsValues),
+        max: Math.max(...baseDpsValues)
+      });
+    }
+
+    function calculateWeaponDps(item){
+      const dpsRange = calculateWeaponDpsRange(item);
+      return dpsRange ? Math.max(dpsRange.min, dpsRange.max) : null;
+    }
+
+    function formatWeaponDps(item){
+      const dpsRange = calculateWeaponDpsRange(item);
+      if(!dpsRange) return '';
+      const minDps = Math.round(dpsRange.min);
+      const maxDps = Math.round(dpsRange.max);
+      if(minDps !== maxDps){
+        return '<span class="range-highlight">' + maxDps + '-' + minDps + '</span>';
+      }
+      return String(minDps);
+    }
+
+    function formatWeaponElementalDps(item){
+      const dpsRange = calculateWeaponElementalDpsRange(item);
+      if(!dpsRange) return '';
+      if(dpsRange.min === 0 && dpsRange.max === 0) return '';
+      if(dpsRange.min !== dpsRange.max){
+        return '<span class="range-highlight">' + dpsRange.max.toFixed(2) + '-' + dpsRange.min.toFixed(2) + '</span>';
+      }
+      return dpsRange.min.toFixed(2);
+    }
+
+    function updateVisibleDpsValues(filteredItems){
+      const itemById = new Map(filteredItems.map(item => [item.id, item]));
+      document.querySelectorAll('#table-results tbody tr[data-item-id]').forEach(row => {
+        const dpsCell = row.querySelector('[data-key="properties.dps"]');
+        const item = itemById.get(row.dataset.itemId);
+        const elementalDpsCell = row.querySelector('[data-key="properties.edps"]');
+        const accuracyCell = row.querySelector('[data-key="properties.accuracy_rating"]');
+        const hitChanceCell = row.querySelector('[data-key="properties.hit_chance"]');
+        if(dpsCell) dpsCell.innerHTML = item ? formatWeaponDps(item) : '';
+        if(elementalDpsCell) elementalDpsCell.innerHTML = item ? formatWeaponElementalDps(item) : '';
+        if(accuracyCell) accuracyCell.textContent = item ? formatWeaponAccuracy(item) : '';
+        if(hitChanceCell) hitChanceCell.textContent = item ? formatHitChance(item) : '';
+      });
+    }
+
+    function getImplicitText(modifierId){
+      if(modifierId === 'StormBladeImplicitLocalLightningDamage_1'){
+        return 'Energy Blade lightning damage scales with your Energy Shield';
+      }
+      const mod = allMods.find(m => m.id === modifierId);
+      if(mod && mod.text){
+        return mod.text;
+      }
+      return modifierId;
+    }
+
+    function getImplicitIds(item){
+      const implicits = item.implicits;
+      if(Array.isArray(implicits)) return implicits;
+      if(typeof implicits !== 'string') return [];
+      try{
+        const parsed = JSON.parse(implicits);
+        if(Array.isArray(parsed)) return parsed;
+      }catch(e){
+        return [implicits];
+      }
+      return [];
+    }
+
+    function getLocalImplicitCritRange(item){
+      let min = 0;
+      let max = 0;
+      let found = false;
+      for(const implicitId of getImplicitIds(item)){
+        const implicit = allMods.find(mod => mod.id === implicitId);
+        for(const stat of implicit?.stats || []){
+          if(stat.id === 'local_critical_strike_chance_+%'){
+            min += Number(stat.min) || 0;
+            max += Number(stat.max) || 0;
+            found = true;
+          }
+        }
+      }
+      return found ? { min, max } : null;
+    }
+
+    function getGlobalImplicitCritMultiplierRange(item){
+      let min = 0;
+      let max = 0;
+      let found = false;
+      for(const implicitId of getImplicitIds(item)){
+        const implicit = allMods.find(mod => mod.id === implicitId);
+        for(const stat of implicit?.stats || []){
+          if(stat.id === 'base_critical_strike_multiplier_+'){
+            min += Number(stat.min) || 0;
+            max += Number(stat.max) || 0;
+            found = true;
+          }
+        }
+      }
+      return found ? { min, max } : null;
+    }
+
+    function hasCritRelatedImplicit(implicitId){
+      const implicit = allMods.find(mod => mod.id === implicitId);
+      return (implicit?.stats || []).some(stat => {
+        if(stat.id === 'local_critical_strike_chance_+%') return true;
+        if(stat.id !== 'base_critical_strike_multiplier_+') return false;
+        const min = Number(stat.min);
+        const max = Number(stat.max);
+        return Number.isFinite(min) && Number.isFinite(max) && min !== max;
+      });
+    }
+
+    function getCritChanceDisplayInfo(item, formattedValue){
+      const implicitCritRange = getLocalImplicitCritRange(item);
+      const baseCritChance = Number(String(formattedValue).replace('%', ''));
+      if(!Number.isFinite(baseCritChance)) return null;
+      const selectedCritRange = selectedItem && selectedItem.id === item.id
+        ? getSelectedStatRollRange(['local_critical_strike_chance_+%'])
+        : { min: 0, max: 0 };
+      const minCritChance = baseCritChance * (
+        1 + ((implicitCritRange?.min || 0) + selectedCritRange.min) / 100
+      );
+      const maxCritChance = baseCritChance * (
+        1 + ((implicitCritRange?.max || 0) + selectedCritRange.max) / 100
+      );
+      return { baseCritChance, adjustedMin: minCritChance, adjustedMax: maxCritChance };
+    }
+
+    function formatCritChanceWithLocalImplicit(item, formattedValue){
+      const displayInfo = getCritChanceDisplayInfo(item, formattedValue);
+      if(!displayInfo) return escapeHtml(formatValue(formattedValue));
+      if(displayInfo.adjustedMin === displayInfo.baseCritChance &&
+         displayInfo.adjustedMax === displayInfo.baseCritChance){
+        return escapeHtml(formatValue(formattedValue));
+      }
+      const { baseCritChance, adjustedMin, adjustedMax } = displayInfo;
+      const adjustedValue = adjustedMin === adjustedMax
+        ? adjustedMin.toFixed(2) + '%'
+        : adjustedMax.toFixed(2) + '%-' + adjustedMin.toFixed(2) + '%';
+      return '<span class="crit-chance-range range-highlight">' + escapeHtml(adjustedValue) + '</span> ' +
+        '(' + escapeHtml(baseCritChance.toFixed(2) + '%') + ')';
+    }
+
+    function formatValue(v){ if(v === null || v === undefined) return ''; if(typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v); try{ return JSON.stringify(v); }catch(e){ return String(v); } }
+
+    function hasDisplayValue(value, field){
+      if(value === null || value === undefined || value === '') return false;
+      if(field === 'requirements' && Number(value) === 0) return false;
+      if(typeof value === 'object') return Object.values(value).some(child => hasDisplayValue(child, field));
+      return true;
+    }
+
+    function formatTableCellValue(value, field, formattedValue = value){
+      if(field === 'requirements' && value !== null && value !== undefined && value !== '' && Number(value) === 0){
+        return '';
+      }
+      return formatValue(formattedValue);
+    }
+
+    const poeBasesUrl = 'https://pathofjs.github.io/PoeBases/';
+
+    async function load(){
+      try {
+        const [itemsRes, modsRes, classesRes, modsByBaseRes, clusterJewelsRes, statsRes] = await Promise.all([
+          fetch(poeBasesUrl + 'base_items.min.json'),
+          fetch(poeBasesUrl + 'mods.min.json'),
+          fetch(poeBasesUrl + 'item_classes.min.json'),
+          fetch(poeBasesUrl + 'mods_by_base.json'),
+          fetch(poeBasesUrl + 'cluster_jewels.min.json'),
+          fetch(poeBasesUrl + 'stats.min.json')
+        ]);
+        
+        const baseItemsData = await itemsRes.json();
+        allItems = Object.entries(baseItemsData)
+          .map(([id, item]) => ({ id, ...item }))
+          .filter(item => !isDntItem(item));
+        allMods = Object.entries(await modsRes.json()).map(([id, mod]) => ({ id, ...mod }));
+        modsById = new Map(allMods.map(mod => [mod.id, mod]));
+        statDefinitionsById = new Map(Object.entries(await statsRes.json()));
+        itemClasses = await classesRes.json();
+        modsByBaseId = indexModsByBase(await modsByBaseRes.json(), Object.keys(baseItemsData), modsById);
+        itemsWithMods = new Set(allItems.filter(hasModsForItem).map(item => item.id.toLowerCase()));
+        clusterJewelsByBaseId = new Map(Object.entries(await clusterJewelsRes.json())
+          .map(([baseId, jewel]) => [baseId.toLowerCase(), jewel]));
+        renderCategoryGroups();
+        window.addEventListener('resize', () => {
+          updateSidebarWidth();
+        });
+        
+        // Calculate minimum width for name column based on longest item name
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.font = '0.8em system-ui, Segoe UI, Arial';
+        let maxWidth = 0;
+        for(const item of allItems){
+          if(item.name){
+            const metrics = ctx.measureText(item.name);
+            maxWidth = Math.max(maxWidth, metrics.width);
+          }
+        }
+        // Add padding (6px on each side + borders)
+        const nameColumnWidth = maxWidth + 12 + 2 + 'px';
+        document.documentElement.style.setProperty('--name-col-width', nameColumnWidth);
+        
+        const searchInput = document.getElementById('search-input');
+        const searchControl = document.getElementById('search-control');
+        searchInput.addEventListener('input', () => {
+          render();
+          updateSearchSuggestions(searchInput.value);
+          syncSearchClearButton();
+        });
+        document.getElementById('search-clear').addEventListener('click', () => {
+          searchInput.value = '';
+          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+          searchInput.focus();
+        });
+        searchInput.addEventListener('focus', () => updateSearchSuggestions(searchInput.value));
+        window.addEventListener('resize', positionSearchSuggestions);
+        window.addEventListener('scroll', positionSearchSuggestions, true);
+        searchInput.addEventListener('keydown', event => {
+          if(event.key === 'ArrowDown'){
+            const firstSuggestion = document.querySelector('#search-suggestions .search-suggestion');
+            if(firstSuggestion){
+              event.preventDefault();
+              firstSuggestion.focus();
+            }
+          } else if(event.key === 'Escape' && !document.getElementById('search-suggestions').hidden){
+            closeSearchSuggestions();
+            event.stopPropagation();
+          }
+        });
+        document.getElementById('search-suggestions').addEventListener('keydown', event => {
+          const options = Array.from(document.querySelectorAll('#search-suggestions .search-suggestion'));
+          const currentIndex = options.indexOf(document.activeElement);
+          if(event.key === 'ArrowDown' && currentIndex < options.length - 1){
+            event.preventDefault();
+            options[currentIndex + 1].focus();
+          } else if(event.key === 'ArrowUp'){
+            event.preventDefault();
+            if(currentIndex <= 0) searchInput.focus();
+            else options[currentIndex - 1].focus();
+          } else if(event.key === 'Escape'){
+            event.preventDefault();
+            event.stopPropagation();
+            closeSearchSuggestions();
+            searchInput.focus();
+          }
+        });
+        document.addEventListener('click', event => {
+          if(!searchControl.contains(event.target)) closeSearchSuggestions();
+        });
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        sidebarToggle.addEventListener('click', () => {
+          setSidebarOpen(sidebarToggle.getAttribute('aria-expanded') !== 'true');
+        });
+        initializeTableResizer();
+        
+        document.getElementById('categoryGroups').addEventListener('click', event => {
+          const btn = event.target.closest('.cat-btn');
+          if(!btn) return;
+          document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentCategory = btn.dataset.category;
+          currentModAvailability = btn.dataset.modAvailability;
+          selectedItem = null;
+          document.getElementById('mods-title').textContent = '';
+          document.getElementById('mods-container').replaceChildren();
+          closeSearchSuggestions();
+          render();
+        });
+
+        // Setup quality slider
+        window.qualityPercent = 0;
+        const range = document.getElementById('qualityRange');
+        const num = document.getElementById('qualityNumber');
+        function clampQuality(v){
+          let n = Number(v);
+          if(isNaN(n)) n = 0;
+          n = Math.round(n);
+          if(n < 0) n = 0; if(n > 30) n = 30;
+          return n;
+        }
+        function setQuality(n){
+          n = clampQuality(n);
+          window.qualityPercent = n;
+          if(range) range.value = n;
+          if(num) num.value = n;
+          try{ if(typeof render === 'function') render(); }catch(e){}
+          try{ if(typeof renderModCalculations === 'function') renderModCalculations(); }catch(e){}
+        }
+        if(range){ range.addEventListener('input', (e)=> setQuality(e.target.value)); range.addEventListener('change', (e)=> setQuality(e.target.value)); }
+        if(num){ num.addEventListener('input', (e)=> setQuality(e.target.value)); num.addEventListener('change', (e)=> setQuality(e.target.value)); }
+        setQuality(0);
+
+        render();
+      } catch(e) {
+        console.error(e);
+        const errorNotice = document.getElementById('app-error');
+        errorNotice.textContent = 'Failed to load app data: ' + (e instanceof Error ? e.message : String(e));
+        errorNotice.hidden = false;
+      }
+    }
+
+    function setSidebarOpen(isOpen){
+      document.body.classList.toggle('sidebar-open', isOpen);
+      const toggle = document.getElementById('sidebar-toggle');
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      toggle.setAttribute('aria-label', isOpen ? 'Close Items menu' : 'Open Items menu');
+    }
+
+    function closeSearchSuggestions(){
+      const suggestions = document.getElementById('search-suggestions');
+      const input = document.getElementById('search-input');
+      suggestions.replaceChildren();
+      suggestions.hidden = true;
+      input.setAttribute('aria-expanded', 'false');
+    }
+
+    function positionSearchSuggestions(){
+      const suggestions = document.getElementById('search-suggestions');
+      if(suggestions.hidden) return;
+      const inputRect = document.getElementById('search-input').getBoundingClientRect();
+      const availableWidth = Math.max(0, window.innerWidth - inputRect.left - 16);
+      const width = Math.max(inputRect.width, Math.min(480, availableWidth));
+      suggestions.style.left = inputRect.left + 'px';
+      suggestions.style.top = inputRect.bottom + 4 + 'px';
+      suggestions.style.setProperty('--search-suggestions-width', width + 'px');
+    }
+
+    function initializeTableResizer(){
+      const content = document.getElementById('content');
+      const table = document.getElementById('table-results');
+      const handle = document.getElementById('table-resize-handle');
+      const controls = document.getElementById('table-controls');
+      const minTableHeight = 120;
+      let dragStartY = 0;
+      let dragStartHeight = 0;
+
+      function getMaxTableHeight(){
+        const style = getComputedStyle(content);
+        const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+        const rowGap = parseFloat(style.rowGap);
+        const controlsMargin = parseFloat(getComputedStyle(controls).marginBottom);
+        const reservedHeight = padding + controls.offsetHeight + controlsMargin +
+          rowGap * 3 + handle.offsetHeight + 120;
+        return Math.max(minTableHeight, content.clientHeight - reservedHeight);
+      }
+
+      function setTableHeight(height){
+        const maxTableHeight = getMaxTableHeight();
+        const clampedHeight = Math.round(Math.min(maxTableHeight, Math.max(minTableHeight, height)));
+        content.style.setProperty('--table-height', clampedHeight + 'px');
+        handle.setAttribute('aria-valuemin', String(minTableHeight));
+        handle.setAttribute('aria-valuemax', String(Math.round(maxTableHeight)));
+        handle.setAttribute('aria-valuenow', String(clampedHeight));
+      }
+
+      handle.addEventListener('pointerdown', event => {
+        if(event.button !== 0) return;
+        event.preventDefault();
+        dragStartY = event.clientY;
+        dragStartHeight = table.getBoundingClientRect().height;
+        handle.setPointerCapture(event.pointerId);
+      });
+      handle.addEventListener('pointermove', event => {
+        if(!handle.hasPointerCapture(event.pointerId)) return;
+        setTableHeight(dragStartHeight + event.clientY - dragStartY);
+      });
+      handle.addEventListener('pointerup', event => {
+        if(handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+      });
+      handle.addEventListener('pointercancel', event => {
+        if(handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+      });
+      handle.addEventListener('keydown', event => {
+        const currentHeight = table.getBoundingClientRect().height;
+        const maxTableHeight = getMaxTableHeight();
+        if(event.key === 'ArrowUp' || event.key === 'PageUp'){
+          event.preventDefault();
+          setTableHeight(currentHeight + (event.key === 'PageUp' ? 80 : 20));
+        } else if(event.key === 'ArrowDown' || event.key === 'PageDown'){
+          event.preventDefault();
+          setTableHeight(currentHeight - (event.key === 'PageDown' ? 80 : 20));
+        } else if(event.key === 'Home'){
+          event.preventDefault();
+          setTableHeight(minTableHeight);
+        } else if(event.key === 'End'){
+          event.preventDefault();
+          setTableHeight(maxTableHeight);
+        }
+      });
+      window.addEventListener('resize', () => {
+        const height = table.getBoundingClientRect().height;
+        if(content.style.getPropertyValue('--table-height')) setTableHeight(height);
+        else{
+          handle.setAttribute('aria-valuemax', String(Math.round(getMaxTableHeight())));
+          handle.setAttribute('aria-valuenow', String(Math.round(height)));
+        }
+      });
+      requestAnimationFrame(() => {
+        handle.setAttribute('aria-valuemax', String(Math.round(getMaxTableHeight())));
+        handle.setAttribute('aria-valuenow', String(Math.round(table.getBoundingClientRect().height)));
+      });
+    }
+
+    function syncSearchClearButton(){
+      const input = document.getElementById('search-input');
+      const clearButton = document.getElementById('search-clear');
+      clearButton.hidden = input.value.length === 0;
+    }
+
+    function getItemCategory(item){
+      return item.item_class === 'Jewel' && /cluster jewel/i.test(item.name || '')
+        ? 'Cluster Jewel'
+        : item.item_class;
+    }
+
+    function hasModsForItem(item){
+      const record = modsByBaseId.get(item.id.toLowerCase())?.record;
+      return Boolean(record && ['prefix', 'suffix'].some(generationType =>
+        Object.values(record.mods?.[generationType] || {}).some(modGroup =>
+          Object.keys(modGroup).length > 0
+        )
+      ));
+    }
+
+    function formatReleaseState(state){
+      const labels = {
+        released: 'Released',
+        legacy: 'Legacy',
+        unique_only: 'Unique only',
+        unreleased: 'Unreleased'
+      };
+      return labels[state] || (state ? String(state) : 'Unknown');
+    }
+
+    function updateSearchSuggestions(query){
+      const suggestions = document.getElementById('search-suggestions');
+      const input = document.getElementById('search-input');
+      const normalizedQuery = query.trim().toLowerCase();
+      suggestions.replaceChildren();
+      if(!normalizedQuery){
+        suggestions.hidden = true;
+        input.setAttribute('aria-expanded', 'false');
+        return;
+      }
+
+      const matches = allItems
+        .filter(item => (item.name || '').toLowerCase().includes(normalizedQuery))
+        .sort((a, b) => {
+          const aStartsWith = (a.name || '').toLowerCase().startsWith(normalizedQuery);
+          const bStartsWith = (b.name || '').toLowerCase().startsWith(normalizedQuery);
+          return Number(bStartsWith) - Number(aStartsWith) || (a.name || '').localeCompare(b.name || '');
+        })
+        .slice(0, 12);
+
+      if(matches.length === 0){
+        const message = document.createElement('div');
+        message.className = 'search-no-results';
+        message.setAttribute('role', 'status');
+        message.textContent = 'No matches';
+        suggestions.appendChild(message);
+      }
+
+      for(const item of matches){
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'search-suggestion';
+        option.setAttribute('role', 'option');
+        option.appendChild(document.createTextNode(item.name || 'Unnamed item'));
+        const category = document.createElement('span');
+        category.className = 'search-suggestion-category';
+        const categoryKey = getItemCategory(item);
+        category.textContent = categoryKey === 'Cluster Jewel'
+          ? 'Cluster Jewels'
+          : getClassLabel(categoryKey, itemClasses[categoryKey] || {});
+        option.appendChild(category);
+        option.addEventListener('mousedown', event => event.preventDefault());
+        option.addEventListener('click', () => selectSearchSuggestion(item));
+        suggestions.appendChild(option);
+      }
+
+      suggestions.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+      positionSearchSuggestions();
+    }
+
+    function selectSearchSuggestion(item){
+      currentCategory = getItemCategory(item);
+      currentModAvailability = categoryModAvailability.get(currentCategory) || 'with';
+      document.querySelectorAll('.cat-btn').forEach(button => {
+        button.classList.toggle(
+          'active',
+          button.dataset.category === currentCategory &&
+            button.dataset.modAvailability === currentModAvailability
+        );
+      });
+      selectedItem = null;
+      selectedMods = { prefixes: {}, suffixes: {} };
+      document.getElementById('search-input').value = item.name || '';
+      syncSearchClearButton();
+      closeSearchSuggestions();
+      render();
+
+      const matchingRow = Array.from(document.querySelectorAll('#table-results tbody tr'))
+        .find(row => row.dataset.itemId === item.id);
+      if(matchingRow) matchingRow.click();
+    }
+
+    function render(){
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      const isClusterJewelCategory = currentCategory === 'Cluster Jewel';
+      const categoryName = isClusterJewelCategory ? 'Cluster Jewels' : itemClasses[currentCategory]?.name || currentCategory;
+      
+      let filtered = allItems.filter(item => {
+        const isClusterJewel = item.item_class === 'Jewel' && /cluster jewel/i.test(item.name || '');
+        const inCategory = isClusterJewelCategory
+          ? isClusterJewel
+          : item.item_class === currentCategory && (currentCategory !== 'Jewel' || !isClusterJewel);
+        const matchesSearch = (item.name || '').toLowerCase().includes(q) || (item.item_class || '').toLowerCase().includes(q);
+        return inCategory && matchesSearch;
+      });
+
+      renderTable(filtered, categoryName);
+    }
+
+    function getSortValue(item, key){
+      const v = item || {};
+      if(key.includes('.')){
+        const parts = key.split('.');
+        let cur = v[parts[0]];
+        for(let i=1;i<parts.length;i++){
+          if(cur === undefined || cur === null) return '';
+          cur = cur[parts[i]];
+        }
+        return (cur === null || cur === undefined) ? '' : String(cur);
+      }
+      if(key === 'Name'){
+        return (v.name !== undefined && v.name !== null) ? String(v.name) : ((v.Name !== undefined && v.Name !== null) ? String(v.Name) : '');
+      }
+      const raw = v[key];
+      return (raw === null || raw === undefined) ? '' : String(raw);
+    }
+
+    function renderTable(filtered, categoryName){
+      const results = document.getElementById('table-results');
+      results.style.paddingBottom = '0px';
+      const critControl = document.getElementById('crit-dps-control');
+      critControl.replaceChildren();
+      if(filtered.length === 0){ 
+        results.innerHTML = '<em>No items</em>'; 
+        return; 
+      }
+
+      const counts = {};
+      for(const item of filtered){ 
+        for(const k in item){ 
+          if(item[k] !== null && item[k] !== undefined) counts[k] = (counts[k] || 0) + 1; 
+        } 
+      }
+      
+      const excluded = new Set(['id','Name','name','domain','Domain','inventory_height','inventory_width','inherits_from','release_state','visual_identity','item_class','tags','charges']);
+      const propsAll = Object.keys(counts).filter(k => counts[k] === filtered.length);
+      let props = propsAll.filter(k => !excluded.has(k));
+      
+      // Exclude armor/evasion/energy_shield from weapons; exclude physical_damage from armours
+      const isWeapon = weaponClasses.has(currentCategory);
+      const isArmour = armourClasses.has(currentCategory);
+      const showBlockColumns = currentCategory === 'Shield' ||
+        currentCategory === 'Staff' || currentCategory === 'Warstaff';
+      const hasWeaponDps = isWeapon && filtered.some(item => calculateWeaponDps(item) !== null);
+      const hasWeaponEdps = hasWeaponDps && filtered.some(item => {
+        const edpsRange = calculateWeaponElementalDpsRange(item);
+        return edpsRange !== null && (edpsRange.min !== 0 || edpsRange.max !== 0);
+      });
+      if(hasWeaponDps){
+        const critStub = document.createElement('div');
+        critStub.className = 'control-stub';
+        const critStubTitle = document.createElement('span');
+        critStubTitle.className = 'control-stub-title';
+        critStubTitle.textContent = 'Crit';
+        critStub.appendChild(critStubTitle);
+        const label = document.createElement('label');
+        label.className = includeCritInDps ? 'crit-dps-toggle is-enabled' : 'crit-dps-toggle';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = includeCritInDps;
+        checkbox.addEventListener('change', () => {
+          includeCritInDps = checkbox.checked;
+          render();
+        });
+        label.append(checkbox, document.createTextNode(' Use crit chance'));
+        critStub.appendChild(label);
+
+        const multiplierControl = document.createElement('label');
+        multiplierControl.className = 'crit-multiplier-control';
+        const multiplierLabel = document.createElement('span');
+        multiplierLabel.textContent = 'Multiplier';
+        const multiplierSlider = document.createElement('input');
+        multiplierSlider.type = 'range';
+        multiplierSlider.min = '150';
+        multiplierSlider.max = '1000';
+        multiplierSlider.step = '10';
+        multiplierSlider.value = String(critMultiplierPercent);
+        multiplierSlider.disabled = !includeCritInDps;
+        multiplierSlider.setAttribute('aria-label', 'Crit multiplier');
+        const multiplierValue = document.createElement('output');
+        multiplierValue.textContent = critMultiplierPercent + '%';
+        multiplierSlider.addEventListener('input', () => {
+          critMultiplierPercent = Number(multiplierSlider.value);
+          multiplierValue.textContent = critMultiplierPercent + '%';
+          updateVisibleDpsValues(filtered);
+        });
+        multiplierSlider.addEventListener('change', () => render());
+        multiplierControl.append(multiplierLabel, multiplierSlider, multiplierValue);
+        critStub.appendChild(multiplierControl);
+        critControl.appendChild(critStub);
+
+        const accuracyStub = document.createElement('div');
+        accuracyStub.className = enableAccuracy
+          ? 'control-stub accuracy-control-stub is-enabled'
+          : 'control-stub accuracy-control-stub';
+        const accuracyToggle = document.createElement('label');
+        accuracyToggle.className = 'accuracy-control';
+        const accuracyCheckbox = document.createElement('input');
+        accuracyCheckbox.type = 'checkbox';
+        accuracyCheckbox.checked = enableAccuracy;
+        accuracyCheckbox.setAttribute('aria-label', 'Hit chance');
+        accuracyCheckbox.addEventListener('change', () => {
+          enableAccuracy = accuracyCheckbox.checked;
+          render();
+        });
+        accuracyToggle.append(accuracyCheckbox, document.createTextNode(' Hit chance'));
+        accuracyStub.appendChild(accuracyToggle);
+        critControl.appendChild(accuracyStub);
+
+        const accuracySettings = document.createElement('div');
+        accuracySettings.className = enableAccuracy ? 'accuracy-settings' : 'accuracy-settings is-disabled';
+        accuracySettings.setAttribute('aria-hidden', String(!enableAccuracy));
+        const inputs = [
+          { key: 'characterLevel', label: 'Level', min: 1, max: 100, value: characterLevel },
+          { key: 'characterDexterity', label: 'Dex', min: 0, max: 1000, value: characterDexterity },
+          { key: 'monsterLevel', label: 'Monster', min: 1, max: 100, value: monsterLevel },
+          { key: 'accuracyOverride', label: 'Accuracy', min: 0, max: 1000000, value: accuracyOverride, optional: true, placeholder: 'auto' },
+          { key: 'evasionOverride', label: 'Evasion', min: 0, max: 1000000, value: evasionOverride, optional: true, placeholder: 'auto' }
+        ];
+        for(const setting of inputs){
+          const control = document.createElement('label');
+          control.appendChild(document.createTextNode(setting.label));
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.min = String(setting.min);
+          input.max = String(setting.max);
+          input.step = '1';
+          input.value = setting.value === null ? '' : String(setting.value);
+          input.disabled = !enableAccuracy;
+          input.setAttribute('aria-label', setting.label);
+          if(setting.optional){
+            input.placeholder = setting.placeholder;
+            input.className = 'accuracy-override';
+          }
+          input.addEventListener('input', () => {
+            const value = input.value === '' ? null : Math.min(
+              setting.max,
+              Math.max(setting.min, Number(input.value) || 0)
+            );
+            if(setting.key === 'characterLevel' && value !== null){
+              characterLevel = value;
+            } else if(setting.key === 'characterDexterity'){
+              characterDexterity = value === null ? 0 : value;
+            } else if(setting.key === 'monsterLevel' && value !== null){
+              monsterLevel = value;
+            } else if(setting.key === 'accuracyOverride'){
+              accuracyOverride = value;
+            } else if(setting.key === 'evasionOverride'){
+              evasionOverride = value;
+            }
+            updateVisibleDpsValues(filtered);
+          });
+          input.addEventListener('change', () => render());
+          control.appendChild(input);
+          accuracySettings.appendChild(control);
+        }
+        accuracyStub.appendChild(accuracySettings);
+      }
+      
+      if(isWeapon){
+        props = props.filter(k => !['armour','armor','evasion','energy_shield'].includes(k));
+      }
+      if(isArmour){
+        props = props.filter(k => k !== 'physical_damage');
+      }
+      
+      // move `energy_shield` and `evasion` to immediately follow `armor`/`armour` when present
+      (function(){
+        const moveAfter = ['energy_shield','evasion'];
+        const anchors = ['armor','armour'];
+        let anchor = null; let anchorIdx = -1;
+        for(const a of anchors){ const i = props.indexOf(a); if(i !== -1){ anchor = a; anchorIdx = i; break; } }
+        if(anchorIdx !== -1){
+          const toMove = [];
+          for(const m of moveAfter){ const i = props.indexOf(m); if(i !== -1){ toMove.push(m); props.splice(i,1); } }
+          props.splice(anchorIdx+1, 0, ...toMove);
+        } else {
+          for(const m of moveAfter){ const i = props.indexOf(m); if(i !== -1){ props.splice(i,1); props.push(m); } }
+        }
+      })();
+      
+      // move Requirements to immediately follow Drop_Level when present
+      (function(){
+        const item = 'requirements';
+        const anchor = 'drop_level';
+        const iReq = props.indexOf(item);
+        const iDrop = props.indexOf(anchor);
+        if(iReq !== -1 && iDrop !== -1){
+          props.splice(iReq, 1);
+          const newIdx = props.indexOf(anchor) + 1;
+          props.splice(newIdx, 0, item);
+        }
+      })();
+
+      // move Implicits to immediately follow properties when present
+      (function(){
+        const item = 'implicits';
+        const anchor = 'properties';
+        const iIt = props.indexOf(item);
+        const iProp = props.indexOf(anchor);
+        if(iIt !== -1 && iProp !== -1){
+          props.splice(iIt, 1);
+          const newIdx = props.indexOf(anchor) + 1;
+          props.splice(newIdx, 0, item);
+        }
+      })();
+
+      if(hasWeaponDps && enableAccuracy){
+        const implicitIndex = props.indexOf('implicits');
+        const insertIndex = implicitIndex === -1
+          ? props.indexOf('properties') + 1
+          : implicitIndex + 1;
+        if(insertIndex > 0) props.splice(insertIndex, 0, 'accuracy_rating', 'hit_chance');
+      }
+
+      const hdr = ['name', ...props];
+
+      // prepare expanded subcolumns for certain complex fields
+      const expandKeys = new Set(['properties','requirements']);
+      const subcols = {}; 
+      const subsub = {}; 
+      for(const k of hdr){ if(expandKeys.has(k)) { subcols[k] = new Set(); subsub[k] = {}; } }
+      for(const item of filtered){ 
+        if(subcols.properties && item.properties && typeof item.properties === 'object'){
+          Object.keys(item.properties).forEach(s=>{
+            const val = item.properties[s];
+            if(val && typeof val === 'object'){
+              const leaves = Object.keys(val).filter(ss => hasDisplayValue(val[ss], 'properties'));
+              if(leaves.length === 0) return;
+              subcols.properties.add(s);
+              subsub.properties[s] = subsub.properties[s] || new Set();
+              leaves.forEach(ss=>subsub.properties[s].add(ss));
+            } else if(hasDisplayValue(val, 'properties')){
+              subcols.properties.add(s);
+            }
+          });
+        }
+        if(subcols.requirements && item.requirements && typeof item.requirements === 'object'){
+          Object.keys(item.requirements).forEach(s=>{
+            const val = item.requirements[s];
+            if(val && typeof val === 'object'){
+              const leaves = Object.keys(val).filter(ss => hasDisplayValue(val[ss], 'requirements'));
+              if(leaves.length === 0) return;
+              subcols.requirements.add(s);
+              subsub.requirements[s] = subsub.requirements[s] || new Set();
+              leaves.forEach(ss=>subsub.requirements[s].add(ss));
+            } else if(hasDisplayValue(val, 'requirements')){
+              subcols.requirements.add(s);
+            }
+          });
+        }
+      }
+      
+      // convert to arrays and sort for stable order
+      for(const k in subcols){
+        let origList = Array.from(subcols[k]).sort();
+        const origMap = subsub[k] || {};
+        if(k === 'properties'){
+          const removeProps = new Set(['charges_per_use','cooldown_ms','description','directions','duration','charges','full_stack_turns_into','life_per_use','mana_burn_ms','mana_per_use','monster_ability_text','monster_category','monster_id','movement_speed','stack_size','stack_size_currency_tab']);
+          origList = origList.filter(n => !removeProps.has(n) && !/^charges/.test(n));
+          if(!filtered.some(item => {
+            const ward = item.properties && item.properties.ward;
+            return ward !== null && ward !== undefined && ward !== '';
+          })){
+            origList = origList.filter(n => n !== 'ward');
+          }
+          if(isArmour){
+            origList = origList.filter(n => n !== 'range' && n !== 'attack_time' && n !== 'critical_strike_chance' && !/^physical_damage/.test(n));
+            origList = origList.filter(n => n !== 'block');
+          }
+          if(isWeapon){
+            origList = origList.filter(n => ['armour','energy_shield','evasion','block'].indexOf(n) === -1);
+            if(hasSelectedLocalChaosDamage()){
+              origList.push('chaos_damage_min', 'chaos_damage_max');
+            }
+            if(hasWeaponDps){
+              origList.push('dps');
+              if(hasWeaponEdps) origList.push('edps');
+            }
+          }
+          if(showBlockColumns){
+            origList.push('attack_block', 'spell_block');
+          }
+        }
+        const map = {};
+
+        if(k === 'properties'){
+          const combined = [];
+          const used = new Set();
+          for(const name of origList){
+            const m = name.match(/^(.*)_(min|max)$/);
+            if(m){
+              const base = m[1];
+              if(used.has(base)) continue;
+              if(origList.indexOf(base + '_min') !== -1 || origList.indexOf(base + '_max') !== -1){
+                combined.push(base);
+                used.add(base);
+              } else {
+                combined.push(name);
+              }
+            } else {
+              combined.push(name);
+            }
+          }
+          for(const name of origList){
+            const mm = name.match(/^(.*)_(min|max)$/);
+            if(mm){
+              const base = mm[1];
+              const leaf = mm[2];
+              map[base] = map[base] || [];
+              if(map[base].indexOf(leaf) === -1) map[base].push(leaf);
+            }
+          }
+          for(const s in origMap){
+            const arr = Array.from(origMap[s] || []);
+            if(arr.length){
+              map[s] = map[s] || [];
+              for(const leaf of arr){ if(map[s].indexOf(leaf) === -1) map[s].push(leaf); }
+            }
+          }
+          for(const s in map){
+            map[s].sort((a,b)=>{ const pref = ['min','max']; const ai = pref.indexOf(a.toLowerCase()); const bi = pref.indexOf(b.toLowerCase()); if(ai !== -1 && bi !== -1) return ai-bi; if(ai !== -1) return -1; if(bi !== -1) return 1; return a.localeCompare(b); });
+          }
+          subcols[k] = combined;
+          subsub[k] = map;
+        } else {
+          subcols[k] = origList;
+          for(const s in origMap){
+            const arr = Array.from(origMap[s] || []);
+            arr.sort((a,b)=>{
+              const pref = ['min','max'];
+              const ai = pref.indexOf(a.toLowerCase());
+              const bi = pref.indexOf(b.toLowerCase());
+              if(ai !== -1 && bi !== -1) return ai - bi;
+              if(ai !== -1) return -1;
+              if(bi !== -1) return 1;
+              return a.localeCompare(b);
+            });
+            map[s] = arr;
+          }
+          subsub[k] = map;
+        }
+      }
+
+      let needThird = false;
+      for(const k in subsub){
+        if(k === 'properties') continue;
+        const map = subsub[k] || {};
+        for(const s in map){ if((map[s] || []).length > 0) { needThird = true; break; } }
+        if(needThird) break;
+      }
+
+      const injectAfterProperty = 'armour';
+      const desiredInject = ['energy_shield','evasion'];
+      const injectKeys = [];
+      for(const m of desiredInject){ const i = props.indexOf(m); if(i !== -1){ injectKeys.push(m); props.splice(i,1); } }
+
+      const expandedSubcols = {};
+      for(const k in subcols){
+        if(k === 'properties'){
+          const desiredOrder = ['armour','energy_shield','evasion','block','attack_block','spell_block','attack_time','critical_strike_chance','physical_damage','chaos_damage','dps','edps','range','charges_max'];
+          const baseSet = new Set(subcols[k] || []);
+          const list = [];
+          for(const name of desiredOrder){ if(baseSet.has(name) || injectKeys.indexOf(name) !== -1){ list.push(name); } }
+          for(const sc of subcols[k]){ if(list.indexOf(sc) === -1) list.push(sc); }
+          expandedSubcols[k] = list;
+        } else if(k === 'requirements'){
+          const desiredReq = ['level','dexterity','intelligence','strength'];
+          const baseSetReq = new Set(subcols[k] || []);
+          const reqList = [];
+          for(const name of desiredReq){ if(baseSetReq.has(name)) reqList.push(name); }
+          for(const sc of subcols[k]){ if(reqList.indexOf(sc) === -1) reqList.push(sc); }
+          expandedSubcols[k] = reqList;
+        } else {
+          expandedSubcols[k] = subcols[k];
+        }
+      }
+
+      // Build headers with sorting
+      const currentSortKey = sortKey;
+      const currentSortDir = sortDir;
+      const sortIndicator = currentSortDir === 1 ? ' ▲' : ' ▼';
+      
+      const firstCells = [];
+      const secondCells = [];
+      const thirdCells = [];
+      for(const h of hdr){
+        if(subcols[h] && subcols[h].length){
+          let leafCount = 0;
+          const scs = expandedSubcols[h] || subcols[h];
+          for(const sc of scs){ const leaves = (subsub[h] && subsub[h][sc]) ? subsub[h][sc].length : 0; leafCount += (leaves>0? leaves : 1); }
+          if(h !== 'properties'){
+            firstCells.push('<th colspan="'+leafCount+'" class="maincol">'+prettyHeaderHtml(h)+'</th>');
+          }
+          for(const sc of scs){
+            const leaves = (subsub[h] && subsub[h][sc]) ? subsub[h][sc] : [];
+            const headerNameMap = { dexterity: 'Dex', intelligence: 'Int', strength: 'Str' };
+            const displayName = (h === 'requirements' && headerNameMap[sc]) ? headerNameMap[sc] : prettyHeader(sc);
+            if(h === 'properties'){
+              const key = h + '.' + sc;
+              const critDpsHeaderClass = includeCritInDps &&
+                (sc === 'dps' || sc === 'edps' || sc === 'critical_strike_chance')
+                ? ' crit-dps-header is-enabled'
+                : '';
+              if(leaves.length){
+                firstCells.push('<th colspan="'+leaves.length+'" class="maincol">'+escapeHtml(displayName).replace(/ (?=[A-Za-z(])/g, '<br>')+'</th>');
+                for(const leaf of leaves){
+                  const leafKey = key + '.' + leaf;
+                  secondCells.push('<th data-key="'+escapeHtml(leafKey)+'" class="sortable" style="cursor:pointer">'+renderSortableHeaderHtml(escapeHtml(leaf.charAt(0).toUpperCase()+leaf.slice(1)), currentSortKey===leafKey, sortIndicator) +'</th>');
+                }
+              } else {
+                firstCells.push('<th rowspan="'+(needThird?3:2)+'" data-key="'+escapeHtml(key)+'" class="sortable'+critDpsHeaderClass+'" style="cursor:pointer">'+renderSortableHeaderHtml(escapeHtml(displayName).replace(/ (?=[A-Za-z(])/g, '<br>'), currentSortKey===key, sortIndicator)+'</th>');
+              }
+            } else if(leaves.length){
+              secondCells.push('<th colspan="'+leaves.length+'">'+escapeHtml(displayName).replace(/ (?=[A-Za-z(])/g, '<br>')+'</th>');
+              for(const leaf of leaves){ const key = h + '.' + sc + '.' + leaf; thirdCells.push('<th data-key="'+escapeHtml(key)+'" class="sortable" style="cursor:pointer">'+renderSortableHeaderHtml(escapeHtml(leaf.charAt(0).toUpperCase()+leaf.slice(1)), currentSortKey===key, sortIndicator) +'</th>'); }
+            } else {
+              const key = h + '.' + sc;
+              const critDpsHeaderClass = includeCritInDps && h === 'properties' &&
+                (sc === 'dps' || sc === 'edps' || sc === 'critical_strike_chance')
+                ? ' crit-dps-header is-enabled'
+                : '';
+              secondCells.push('<th rowspan="'+(needThird?2:1)+'" data-key="'+escapeHtml(key)+'" class="sortable'+critDpsHeaderClass+'" style="cursor:pointer">'+renderSortableHeaderHtml(escapeHtml(displayName).replace(/ (?=[A-Za-z(])/g, '<br>'), currentSortKey===key, sortIndicator) +'</th>');
+            }
+          }
+        } else {
+          const rowspan = needThird ? 3 : 2;
+          const key = h === 'accuracy_rating' || h === 'hit_chance'
+            ? 'properties.' + h
+            : h;
+          firstCells.push('<th rowspan="'+rowspan+'" data-key="'+escapeHtml(key)+'" class="sortable" style="cursor:pointer">'+renderSortableHeaderHtml(prettyHeaderHtml(h), currentSortKey===key, sortIndicator) +'</th>');
+        }
+      }
+      
+      let headerHtml = '<table class="results"><thead>' + '<tr>' + firstCells.join('') + '</tr>';
+      if(secondCells.length) headerHtml += '<tr>' + secondCells.join('') + '</tr>';
+      if(thirdCells.length) headerHtml += '<tr>' + thirdCells.join('') + '</tr>';
+      headerHtml += '</thead><tbody>';
+
+      const getSortValue = (item, key) => {
+        if(key === 'properties.attack_block' || key === 'properties.spell_block'){
+          const blockType = key.slice('properties.'.length);
+          const blockRange = getBlockChanceRange(item, blockType);
+          return blockRange ? String(blockRange.max) : '';
+        }
+        if(key === 'properties.accuracy_rating'){
+          return String(getWeaponAccuracyInfo(item).maxAccuracy);
+        }
+        if(key === 'properties.hit_chance'){
+          return String(getWeaponAccuracyInfo(item).maxChance * 100);
+        }
+        if(key === 'properties.dps'){
+          const dps = calculateWeaponDps(item);
+          return dps === null ? '' : String(dps);
+        }
+        if(key === 'properties.edps'){
+          const dps = calculateWeaponElementalDpsRange(item);
+          return dps === null ? '' : String(Math.max(dps.min, dps.max));
+        }
+        if(key === 'properties.critical_strike_chance'){
+          const rawCritChance = item.properties && item.properties.critical_strike_chance;
+          if(rawCritChance === null || rawCritChance === undefined || rawCritChance === '') return '';
+          const formattedCritChance = applyModsToFormattedValue(
+            item,
+            'critical_strike_chance',
+            formatPropertyValue('critical_strike_chance', rawCritChance)
+          );
+          const displayInfo = getCritChanceDisplayInfo(item, formattedCritChance);
+          return displayInfo ? String((displayInfo.adjustedMin + displayInfo.adjustedMax) / 2) : '';
+        }
+        if(key.includes('.')){
+          const parts = key.split('.');
+          let cur = item[parts[0]];
+          for(let i=1;i<parts.length;i++){
+            if(cur === undefined || cur === null){
+              if(parts[0] === 'properties' && parts.length === 3){
+                const propName = parts[1] + '_' + parts[2];
+                const tryVal = (item.properties && (item.properties[propName] !== undefined && item.properties[propName] !== null)) ? item.properties[propName] : undefined;
+                return (tryVal === null || tryVal === undefined) ? '' : String(tryVal);
+              }
+              return '';
+            }
+            cur = cur[parts[i]];
+          }
+          return (cur === null || cur === undefined) ? '' : String(cur);
+        }
+        if(key === 'name'){
+          return (item.name !== undefined && item.name !== null) ? String(item.name) : '';
+        }
+        if(key === 'properties'){
+          try{ return JSON.stringify(item.properties || ''); }catch(e){ return String(item.properties || ''); }
+        }
+        if(key === 'implicits'){
+          const val = item[key];
+          if(Array.isArray(val)) return val.join(', ');
+          if(typeof val === 'string' && val.startsWith('[') && val.endsWith(']')){
+            try{ const p = JSON.parse(val); if(Array.isArray(p)) return p.join(', '); }catch(e){}
+            return val.slice(1,-1).trim();
+          }
+          return (val === null || val === undefined) ? '' : String(val);
+        }
+        const raw = item[key];
+        return (raw === null || raw === undefined) ? '' : String(raw);
+      };
+      
+      if(currentSortKey){
+        filtered.sort((a,b)=>{
+          const A = getSortValue(a, currentSortKey);
+          const B = getSortValue(b, currentSortKey);
+          const nA = Number(A); const nB = Number(B);
+          if(!isNaN(nA) && !isNaN(nB)) return (nA - nB) * currentSortDir;
+          return A.localeCompare(B) * currentSortDir;
+        });
+      }
+
+      let rows = '';
+      for(const item of filtered){
+        const isSelected = selectedItem && selectedItem.id === item.id;
+        const cells = [];
+        const nameVal = (item.name !== undefined && item.name !== null) ? item.name : '';
+        cells.push('<td class="small">' + escapeHtml(formatValue(nameVal)) + '</td>');
+        for(const k of props){
+          if(k === 'accuracy_rating'){
+            cells.push('<td class="small" data-key="properties.accuracy_rating">' + formatWeaponAccuracy(item) + '</td>');
+          } else if(k === 'hit_chance'){
+            cells.push('<td class="small" data-key="properties.hit_chance">' + formatHitChance(item) + '</td>');
+          } else if(subcols[k] && subcols[k].length){
+            const scs = expandedSubcols[k] || subcols[k];
+            for(const sc of scs){
+              const leaves = (subsub[k] && subsub[k][sc]) ? subsub[k][sc] : [];
+              if(leaves && leaves.length){
+                const nested = (item[k] && typeof item[k] === 'object') ? item[k][sc] : undefined;
+                if(nested && typeof nested === 'object'){
+                  for(const leaf of leaves){
+                    const val = nested[leaf];
+                    const out = formatPropertyValue(sc, val);
+                    cells.push('<td class="small">' + escapeHtml(formatTableCellValue(val, k, out)) + '</td>');
+                  }
+                } else if(k === 'properties'){
+                  if(item.properties && item.properties[sc] !== undefined && (item.properties[sc] === null || typeof item.properties[sc] !== 'object')){
+                    const baseVal = item.properties[sc];
+                    const outBase = formatPropertyValue(sc, baseVal);
+                    for(const leaf of leaves){
+                      cells.push('<td class="small">' + escapeHtml(formatValue(outBase)) + '</td>');
+                    }
+                  } else {
+                    for(const leaf of leaves){
+                      const keyName = sc + '_' + leaf;
+                      const val = (item.properties && (item.properties[keyName] !== undefined)) ? item.properties[keyName] : undefined;
+                      if(sc === 'physical_damage' && (leaf === 'min' || leaf === 'max')){
+                        cells.push('<td class="small">' + formatModifiedPhysicalDamage(item, leaf, val) + '</td>');
+                        continue;
+                      }
+                      if(sc === 'chaos_damage' && (leaf === 'min' || leaf === 'max')){
+                        cells.push('<td class="small">' + formatSelectedLocalChaosDamage(item, leaf) + '</td>');
+                        continue;
+                      }
+                      let out = formatPropertyValue(sc, val);
+                      // Apply formatted mods (for attack speed) - use sc as property name
+                      out = applyModsToFormattedValue(item, sc, out);
+                      cells.push('<td class="small">' + escapeHtml(formatValue(out)) + '</td>');
+                    }
+                  }
+                } else {
+                  for(const leaf of leaves){
+                    const obj = (item[k] && typeof item[k] === 'object') ? item[k][sc] : undefined;
+                    const val = (obj && typeof obj === 'object') ? obj[leaf] : undefined;
+                    let out = formatPropertyValue(sc, val);
+                    out = applyModsToFormattedValue(item, sc, out);
+                    cells.push('<td class="small">' + escapeHtml(formatTableCellValue(val, k, out)) + '</td>');
+                  }
+                }
+              } else {
+                if(k === 'properties' && injectKeys.indexOf(sc) !== -1){
+                  const val = item[sc];
+                  let out = formatPropertyValue(sc, val);
+                  out = applyModsToFormattedValue(item, sc, out);
+                  cells.push('<td class="small">' + escapeHtml(formatValue(out)) + '</td>');
+                } else if(k === 'properties' && (sc === 'attack_block' || sc === 'spell_block')){
+                  cells.push('<td class="small">' + formatBlockChance(item, sc) + '</td>');
+                } else if(k === 'properties' && sc === 'dps'){
+                  const dpsValueClass = includeCritInDps ? 'small crit-dps-value is-enabled' : 'small';
+                  cells.push('<td class="' + dpsValueClass + '" data-key="properties.dps">' + formatWeaponDps(item) + '</td>');
+                } else if(k === 'properties' && sc === 'edps'){
+                  const dpsValueClass = includeCritInDps ? 'small crit-dps-value is-enabled' : 'small';
+                  cells.push('<td class="' + dpsValueClass + '" data-key="properties.edps">' + formatWeaponElementalDps(item) + '</td>');
+                } else {
+                  const obj = item[k] || {};
+                  const val = (obj && typeof obj === 'object') ? obj[sc] : undefined;
+                  let out = formatPropertyValue(sc, val);
+                  out = applyModsToFormattedValue(item, sc, out);
+                  const formattedCell = k === 'properties' && sc === 'critical_strike_chance'
+                    ? formatCritChanceWithLocalImplicit(item, out)
+                    : escapeHtml(formatTableCellValue(val, k, out));
+                  const critChanceClass = k === 'properties' && sc === 'critical_strike_chance'
+                    ? (includeCritInDps ? ' small crit-dps-value is-enabled' : ' small crit-dps-value')
+                    : ' small';
+                  cells.push('<td class="' + critChanceClass.trim() + '">' + formattedCell + '</td>');
+                }
+              }
+            }
+          } else {
+            if(k === 'properties' && item.properties && typeof item.properties === 'object'){
+              const inner = [];
+              for(const pk in item.properties){
+                const pv = item.properties[pk];
+                if(pv !== null && pv !== undefined){
+                  const out = formatPropertyValue(pk, pv);
+                  inner.push('<div><strong>' + escapeHtml(pk) + ':</strong> ' + escapeHtml(formatValue(out)) + '</div>');
+                }
+              }
+              cells.push('<td class="small">' + inner.join('') + '</td>');
+            } else if (k === 'implicits') {
+              const implicitIds = getImplicitIds(item);
+              const implicitTexts = implicitIds.map(implicitId => {
+                const text = getImplicitText(implicitId);
+                const isCritRelated = weaponClasses.has(item.item_class) &&
+                  hasCritRelatedImplicit(implicitId);
+                const escapedText = escapeHtml(formatValue(text));
+                return isCritRelated
+                  ? '<span class="range-highlight">' + escapedText + '</span>'
+                  : escapedText;
+              });
+              cells.push('<td class="small">' + implicitTexts.join(', ') + '</td>');
+            } else {
+              const cellValue = k === 'release_state'
+                ? formatReleaseState(item[k])
+                : formatValue(item[k]);
+              cells.push('<td class="small">' + escapeHtml(cellValue) + '</td>');
+            }
+          }
+        }
+        rows += '<tr class="'+(isSelected ? 'selected' : '')+'" data-item-id="'+escapeHtml(item.id)+'">' + cells.join('') + '</tr>';
+      }
+      
+      results.innerHTML = headerHtml + rows + '</tbody></table>';
+
+      // Insert title row
+      const tableEl = results.querySelector('table.results');
+      if(tableEl && tableEl.tHead){
+        try{
+          let totalCols = 0;
+          if(tableEl.tBodies && tableEl.tBodies[0] && tableEl.tBodies[0].rows && tableEl.tBodies[0].rows.length > 0){
+            totalCols = tableEl.tBodies[0].rows[0].cells.length;
+          } else {
+            const lastHeaderRow = tableEl.tHead.rows[tableEl.tHead.rows.length - 1];
+            for(const cell of Array.from(lastHeaderRow.cells)){
+              const cs = parseInt(cell.getAttribute('colspan')) || cell.colSpan || 1;
+              totalCols += cs;
+            }
+          }
+          if(totalCols <= 0) totalCols = 1;
+          const titleRow = tableEl.tHead.insertRow(0);
+          const th = document.createElement('th');
+          th.colSpan = totalCols;
+          th.className = 'table-title';
+          th.textContent = categoryName;
+          titleRow.appendChild(th);
+          // compute and assign exact sticky top offsets for each header row
+          try{
+            const headRows = Array.from(tableEl.tHead.rows);
+            let cum = 0;
+            for(let r = 0; r < headRows.length; r++){
+              const row = headRows[r];
+              const cells = Array.from(row.cells || []);
+              cells.forEach(cell => {
+                cell.style.position = 'sticky';
+                cell.style.top = cum + 'px';
+                cell.style.zIndex = (120 - r).toString();
+              });
+              cum += row.offsetHeight || 36;
+            }
+            if(headRows.length > 1){ Array.from(headRows[1].cells).forEach(c => c.classList.add('maincolshadow')); }
+          }catch(e){}
+        }catch(e){}
+      }
+
+      // attach click handlers to header cells for sorting
+      const ths = results.querySelectorAll('table.results thead th.sortable');
+      ths.forEach(th=>{
+        th.addEventListener('click', ()=>{
+          const key = th.dataset.key;
+          if(sortKey === key) sortDir = -sortDir;
+          else { sortKey = key; sortDir = -1; }
+          render();
+        });
+      });
+
+      // attach row click handlers
+      document.querySelectorAll('#table-results table.results tbody tr').forEach(row => {
+        row.addEventListener('click', () => {
+          const itemId = row.dataset.itemId;
+          const nextItem = allItems.find(i => i.id === itemId);
+          if(!nextItem) return;
+          retainModsAvailableForItem(nextItem);
+          selectedItem = nextItem;
+          render();
+          renderMods();
+          renderSelectedModsPanel();
+          renderModCalculations();
+        });
+      });
+    }
+
+    function retainModsAvailableForItem(item){
+      const baseRecord = modsByBaseId.get(item.id.toLowerCase());
+      if(!baseRecord){
+        throw new Error('No mods_by_base record found for selected base: ' + item.id);
+      }
+
+      const availableModIds = new Set();
+      for(const generationType of ['prefix', 'suffix']){
+        const groups = baseRecord.record.mods?.[generationType] || {};
+        for(const modIds of Object.values(groups)){
+          for(const modId of Object.keys(modIds)){
+            availableModIds.add(modId);
+          }
+        }
+      }
+
+      for(const typeKey of ['prefixes', 'suffixes']){
+        for(const [modType, mod] of Object.entries(selectedMods[typeKey])){
+          if(!availableModIds.has(mod.id)){
+            delete selectedMods[typeKey][modType];
+          }
+        }
+      }
+    }
+
+    function getModGroupKey(mod){
+      return mod.type || mod.name || mod.id || '';
+    }
+
+    function getModLocality(mods){
+      const flags = mods.flatMap(mod =>
+        (mod.stats || []).map(stat => statDefinitionsById.get(stat.id)?.is_local)
+      );
+      if(flags.length === 0 || flags.some(flag => typeof flag !== 'boolean')){
+        return {key:'unknown', label:'LOCALITY UNKNOWN'};
+      }
+      if(flags.every(Boolean)) return {key:'local', label:'LOCAL'};
+      if(flags.every(flag => !flag)) return {key:'global', label:'GLOBAL'};
+      return {key:'mixed', label:'MIXED'};
+    }
+
+    function renderModLocality(mods){
+      const locality = getModLocality(Array.isArray(mods) ? mods : [mods]);
+      return '<span class="mod-locality" data-locality="' + locality.key +
+        '">' + locality.label + '</span>';
+    }
+
+    function getModGroupStateKey(itemId, sectionTitle, modType){
+      return JSON.stringify([itemId, sectionTitle, modType]);
+    }
+
+    function filterModsByTags(modEntries, selectedTags, tagsByModType){
+      if(selectedTags.size === 0) return modEntries;
+      return modEntries.filter(({mod}) =>
+        Array.from(selectedTags).every(tag =>
+          (tagsByModType.get(getModGroupKey(mod)) || new Set()).has(tag)
+        )
+      );
+    }
+
+    function getCompatibleModTags(tagsByModType, selectedTags){
+      const compatibleTags = new Set();
+      for(const tags of tagsByModType.values()){
+        if(Array.from(selectedTags).every(tag => tags.has(tag))){
+          for(const tag of tags) compatibleTags.add(tag);
+        }
+      }
+      return compatibleTags;
+    }
+
+    function sortModTagOptions(tagTypeCounts, tagsByModType){
+      const remaining = new Set(tagTypeCounts.keys());
+      const orderedTags = [];
+      const compareTags = (a, b) =>
+        (tagTypeCounts.get(b) || 0) - (tagTypeCounts.get(a) || 0) || a.localeCompare(b);
+
+      while(remaining.size > 0){
+        const anchor = Array.from(remaining).sort(compareTags)[0];
+        remaining.delete(anchor);
+        orderedTags.push(anchor);
+
+        const relatedTagCounts = new Map();
+        for(const tags of tagsByModType.values()){
+          if(!tags.has(anchor)) continue;
+          for(const tag of tags){
+            if(remaining.has(tag)){
+              relatedTagCounts.set(tag, (relatedTagCounts.get(tag) || 0) + 1);
+            }
+          }
+        }
+        const relatedTags = Array.from(relatedTagCounts.keys()).sort((a, b) =>
+          relatedTagCounts.get(b) / (tagTypeCounts.get(b) || 1) -
+            relatedTagCounts.get(a) / (tagTypeCounts.get(a) || 1) ||
+          relatedTagCounts.get(b) - relatedTagCounts.get(a) ||
+          compareTags(a, b)
+        );
+        for(const tag of relatedTags){
+          remaining.delete(tag);
+          orderedTags.push(tag);
+        }
+      }
+
+      return orderedTags.map(tag => [tag, tagTypeCounts.get(tag)]);
+    }
+
+    function hasPositiveModWeightTag(mod, tag){
+      return ['spawn_weights', 'generation_weights'].some(field =>
+        (mod[field] || []).some(weight => weight.tag === tag && weight.weight > 0)
+      );
+    }
+
+    function getClusterSubtypeModifiers(jewel, passive, baseMods){
+      const subtypeTags = new Set(jewel.passive_skills.map(entry => entry.tag));
+      const modifiers = new Map();
+      for(const {mod} of baseMods){
+        const hasSubtypeWeight = Array.from(subtypeTags).some(tag => hasPositiveModWeightTag(mod, tag));
+        if(!hasSubtypeWeight || hasPositiveModWeightTag(mod, passive.tag)){
+          modifiers.set(mod.id, mod);
+        }
+      }
+      for(const mod of allMods){
+        if(['prefix', 'suffix'].includes(mod.generation_type) &&
+           hasPositiveModWeightTag(mod, passive.tag)){
+          modifiers.set(mod.id, mod);
+        }
+      }
+      return Array.from(modifiers.values()).map(mod => ({mod}));
+    }
+
+    function indexModsByBase(modsByBase, baseItemIds, modsById){
+      const byBaseId = new Map();
+      for(const [itemClass, conditions] of Object.entries(modsByBase)){
+        for(const [condition, record] of Object.entries(conditions)){
+          for(const baseId of record.bases || []){
+            const key = baseId.toLowerCase();
+            if(byBaseId.has(key)){
+              throw new Error('Base appears in multiple mods_by_base records: ' + baseId);
+            }
+            byBaseId.set(key, {itemClass, condition, record});
+          }
+        }
+      }
+
+      for(const baseId of baseItemIds){
+        if(!byBaseId.has(baseId.toLowerCase())){
+          throw new Error('No mods_by_base record found for base: ' + baseId);
+        }
+      }
+      if(byBaseId.size !== baseItemIds.length){
+        throw new Error('mods_by_base base count does not match base_items.json');
+      }
+
+      for(const {record} of byBaseId.values()){
+        for(const generationType of ['prefix', 'suffix']){
+          const groups = record.mods?.[generationType] || {};
+          for(const modIds of Object.values(groups)){
+            for(const modId of Object.keys(modIds)){
+              const mod = modsById.get(modId);
+              if(!mod){
+                throw new Error('mods_by_base references an unknown mod: ' + modId);
+              }
+              if(mod.generation_type !== generationType){
+                throw new Error('Modifier generation type mismatch for mod: ' + modId);
+              }
+            }
+          }
+        }
+      }
+      return byBaseId;
+    }
+
+    function renderMods(){
+      if(!selectedItem){
+        document.getElementById('mods-title').textContent = '';
+        document.getElementById('mods-container').replaceChildren();
+        return;
+      }
+
+      document.querySelectorAll('.mod-group-header').forEach(header => {
+        const content = document.getElementById(header.dataset.groupId);
+        if(content){
+          openModGroups.set(
+            getModGroupStateKey(header.dataset.baseId, header.dataset.sectionTitle, header.dataset.modType),
+            content.style.display !== 'none'
+          );
+        }
+      });
+      document.getElementById('mods-title').textContent = escapeHtml(selectedItem.name || 'Unknown');
+      const selectionNotice = document.getElementById('mod-selection-notice');
+      selectionNotice.hidden = true;
+      selectionNotice.textContent = '';
+      if(!itemsWithMods.has(selectedItem.id.toLowerCase())){
+        document.getElementById('mods-container').innerHTML = '<div class="no-mods">No modifiers</div>';
+        return;
+      }
+
+      const baseRecord = modsByBaseId.get(selectedItem.id.toLowerCase());
+      if(!baseRecord){
+        throw new Error('No mods_by_base record found for selected base: ' + selectedItem.id);
+      }
+      if(clusterSubtypeBaseId !== selectedItem.id){
+        clusterSubtypeBaseId = selectedItem.id;
+        activeClusterSubtypeId = null;
+      }
+      if(modTagFilterBaseId !== selectedItem.id){
+        activeModTagFilters.clear();
+        modTagFilterBaseId = selectedItem.id;
+      }
+      let matchedMods = [];
+
+      for(const generationType of ['prefix', 'suffix']){
+        const groups = baseRecord.record.mods?.[generationType] || {};
+        for(const modIds of Object.values(groups)){
+          for(const modId of Object.keys(modIds)){
+            const mod = modsById.get(modId);
+            if(!mod){
+              throw new Error('mods_by_base references an unknown mod: ' + modId);
+            }
+            matchedMods.push({mod});
+          }
+        }
+      }
+
+      const clusterJewel = clusterJewelsByBaseId.get(selectedItem.id.toLowerCase());
+      const selectedClusterSubtype = clusterJewel?.passive_skills.find(entry => entry.id === activeClusterSubtypeId);
+      if(selectedClusterSubtype){
+        matchedMods = getClusterSubtypeModifiers(clusterJewel, selectedClusterSubtype, matchedMods);
+      } else if(clusterJewel){
+        activeClusterSubtypeId = null;
+      }
+
+      const tagsByModType = new Map();
+      for(const {mod} of matchedMods){
+        const modType = getModGroupKey(mod);
+        if(!tagsByModType.has(modType)) tagsByModType.set(modType, new Set());
+        for(const tag of Array.isArray(mod.implicit_tags) ? mod.implicit_tags : []){
+          tagsByModType.get(modType).add(tag);
+        }
+      }
+      const tagTypeCounts = new Map();
+      for(const tags of tagsByModType.values()){
+        for(const tag of tags){
+          tagTypeCounts.set(tag, (tagTypeCounts.get(tag) || 0) + 1);
+        }
+      }
+      const modTagOptions = sortModTagOptions(tagTypeCounts, tagsByModType);
+      const compatibleModTags = getCompatibleModTags(tagsByModType, activeModTagFilters);
+      const visibleMods = filterModsByTags(matchedMods, activeModTagFilters, tagsByModType);
+      const clusterSubtypeHtml = clusterJewel
+        ? '<div class="cluster-subtype-control">' +
+          '<span class="cluster-subtype-label">Small passive</span>' +
+          '<div class="cluster-subtype-options" role="group" aria-label="Guaranteed cluster jewel subtypes">' +
+          clusterJewel.passive_skills.map(entry =>
+            '<button class="cluster-subtype-toggle" type="button" data-cluster-subtype="' +
+            escapeHtml(entry.id) + '" aria-pressed="' + (entry.id === activeClusterSubtypeId) + '">' +
+            escapeHtml(entry.name) + '</button>'
+          ).join('') +
+          '</div></div>'
+        : '';
+
+      // Separate mods into prefixes and suffixes
+      const prefixMods = visibleMods.filter(e => e.mod.generation_type === 'prefix');
+      const suffixMods = visibleMods.filter(e => e.mod.generation_type === 'suffix');
+      if(activeModTagFilters.size > 0){
+        if(activeModTab === 'prefixes' && prefixMods.length === 0 && suffixMods.length > 0){
+          activeModTab = 'suffixes';
+        } else if(activeModTab === 'suffixes' && suffixMods.length === 0 && prefixMods.length > 0){
+          activeModTab = 'prefixes';
+        }
+      }
+
+      function groupAndSortMods(mods){
+        const modsGrouped = {};
+        for(const entry of mods){
+          const modType = getModGroupKey(entry.mod);
+          if(!modsGrouped[modType]) modsGrouped[modType] = [];
+          modsGrouped[modType].push(entry);
+        }
+
+        for(const modType in modsGrouped){
+          modsGrouped[modType].sort((a, b) => {
+            const aText = a.mod.text || '';
+            const bText = b.mod.text || '';
+            const aNumbers = (aText.match(/\d+/g) || []).map(Number);
+            const bNumbers = (bText.match(/\d+/g) || []).map(Number);
+            const aMax = aNumbers.length > 0 ? Math.max(...aNumbers) : 0;
+            const bMax = bNumbers.length > 0 ? Math.max(...bNumbers) : 0;
+            return bMax - aMax;
+          });
+        }
+        return modsGrouped;
+      }
+
+      function renderModsSection(mods, sectionTitle){
+        const isPrefix = sectionTitle === 'PREFIXES';
+        const typeKey = isPrefix ? 'prefixes' : 'suffixes';
+        const isClusterSubtypeView = Boolean(selectedClusterSubtype);
+        
+        let html = '<div class="mods-column">';
+        
+        if(mods.length > 0){
+          const clusterNotables = isClusterSubtypeView
+            ? mods.filter(({mod}) => /^1 Added Passive Skill is /.test(mod.text || ''))
+            : [];
+          const tieredMods = clusterNotables.length
+            ? mods.filter(({mod}) => !/^1 Added Passive Skill is /.test(mod.text || ''))
+            : mods;
+          const modsGrouped = groupAndSortMods(tieredMods);
+          const renderModCard = (mod, modType, tierLabel = '', showLocality = false) => {
+            const isSelected = selectedMods[typeKey][modType] && selectedMods[typeKey][modType].id === mod.id;
+            const isFull = Object.keys(selectedMods[typeKey]).length >= 3;
+            const canSelect = isSelected || !isFull;
+            const isEssenceOnly = mod.is_essence_only === true;
+            const modDisplay = (tierLabel ? tierLabel + ': ' : '') + (mod.text || '') + (mod.name ? ' ('+mod.name+')' : '');
+            const essenceLabel = isEssenceOnly ? '<span style="font-size:0.75em;color:var(--muted);margin-left:4px">(Essence)</span>' : '';
+            return '<div class="mod-card'+(isSelected ? ' is-selected' : '')+'" style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:0.8em">' +
+              '<div class="mod-card-text" style="flex:1">'+(showLocality ? renderModLocality(mod) + ' ' : '')+escapeHtml(modDisplay)+essenceLabel+'</div>' +
+              '<button class="mod-select-btn'+(isSelected ? ' is-selected' : '')+'" data-mod-id="'+escapeHtml(mod.id)+'" data-mod-type="'+escapeHtml(modType)+'" data-mod-name="'+escapeHtml(mod.name)+'" data-is-prefix="'+isPrefix+'" aria-pressed="'+isSelected+'" style="padding:4px 8px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:'+(canSelect?'pointer':'not-allowed')+';border-radius:4px;white-space:nowrap;opacity:'+(canSelect?'1':'0.5')+';min-width:32px">' +
+              (isSelected ? '−' : '+') +
+              '</button></div>';
+          };
+          if(clusterNotables.length){
+            html += '<section class="cluster-notables" aria-label="Cluster notables">' +
+              '<h3 class="cluster-notables-title">Notables ('+clusterNotables.length+')</h3>' +
+              '<div class="cluster-notables-list">' +
+              clusterNotables.map(({mod}) => renderModCard(mod, getModGroupKey(mod), '', true)).join('') +
+              '</div></section>';
+          }
+          const modTypes = Object.keys(modsGrouped).sort();
+          
+          for(const modType of modTypes){
+            const group = modsGrouped[modType];
+            const groupId = 'mod-group-' + escapeHtml(sectionTitle + '_' + modType).replace(/[^\w-]/g, '_');
+            const stateKey = getModGroupStateKey(selectedItem.id, sectionTitle, modType);
+            const isOpen = openModGroups.get(stateKey) === true;
+            html += '<div class="mod-group"><div class="mod-group-header" role="button" tabindex="0" aria-expanded="' +
+              isOpen + '" data-group-id="'+groupId+'" data-base-id="'+escapeHtml(selectedItem.id)+'" data-section-title="'+sectionTitle+'" data-mod-type="' +
+              escapeHtml(modType) + '">';
+            html += '<span class="mod-group-toggle">'+(isOpen ? '▼' : '▶')+'</span>';
+            html += '<span class="mod-group-name">'+escapeHtml(modType)+'</span>';
+            html += '<span class="mod-group-count">'+group.length+'</span>';
+            html += renderModLocality(group.map(({mod}) => mod));
+            html += '</div><div class="mod-group-content" id="'+groupId+'" style="display:'+(isOpen ? 'block' : 'none')+'">';
+            
+            for(let tierIdx = 0; tierIdx < group.length; tierIdx++){
+              const {mod} = group[tierIdx];
+              const tierLabel = group.length > 1 ? 'T'+(tierIdx+1) : '';
+              html += renderModCard(mod, modType, tierLabel);
+            }
+            html += '</div></div>';
+          }
+        }
+        html += '</div>';
+        return html;
+      }
+
+      let modsHtml = '';
+      
+      if(matchedMods.length === 0){
+        modsHtml = clusterSubtypeHtml;
+      } else {
+        modsHtml += clusterSubtypeHtml +
+          '<div class="mod-tag-filter-row">' +
+          '<span>Tags</span>' +
+          modTagOptions.map(([tag, count]) =>
+            '<button class="mod-tag-filter-toggle" type="button" data-mod-tag="' + escapeHtml(tag) +
+            '" aria-pressed="' + activeModTagFilters.has(tag) + '"' +
+            (!compatibleModTags.has(tag) ? ' disabled' : '') + '>' +
+            escapeHtml(tag) + '<span class="mod-tag-filter-count">' + count +
+            '</span></button>'
+          ).join('') +
+          '<button class="mod-tag-filter-clear" type="button"' +
+          (activeModTagFilters.size === 0 ? ' disabled' : '') + '>Clear</button>' +
+          '</div>' +
+          '<div class="mod-tabs" role="tablist" aria-label="Modifier type">' +
+          '<button class="mod-tab" id="prefixes-tab" type="button" role="tab" data-mod-tab="prefixes" aria-controls="prefixes-panel" aria-selected="' + (activeModTab === 'prefixes') + '" tabindex="' + (activeModTab === 'prefixes' ? '0' : '-1') + '">Prefixes (' + prefixMods.length + ')</button>' +
+          '<button class="mod-tab" id="suffixes-tab" type="button" role="tab" data-mod-tab="suffixes" aria-controls="suffixes-panel" aria-selected="' + (activeModTab === 'suffixes') + '" tabindex="' + (activeModTab === 'suffixes' ? '0' : '-1') + '">Suffixes (' + suffixMods.length + ')</button>' +
+          '</div>' +
+          '<div class="mod-tab-panel" id="prefixes-panel" role="tabpanel" aria-labelledby="prefixes-tab" ' + (activeModTab === 'prefixes' ? '' : 'hidden') + '>' +
+          renderModsSection(prefixMods, 'PREFIXES') +
+          '</div>' +
+          '<div class="mod-tab-panel" id="suffixes-panel" role="tabpanel" aria-labelledby="suffixes-tab" ' + (activeModTab === 'suffixes' ? '' : 'hidden') + '>' +
+          renderModsSection(suffixMods, 'SUFFIXES') +
+          '</div>';
+      }
+
+      document.getElementById('mods-container').innerHTML = modsHtml;
+
+      const modTabs = Array.from(document.querySelectorAll('.mod-tab'));
+      const activateModTab = tab => {
+        activeModTab = tab.dataset.modTab;
+        for(const button of modTabs){
+          const isActive = button === tab;
+          button.setAttribute('aria-selected', String(isActive));
+          button.tabIndex = isActive ? 0 : -1;
+          document.getElementById(button.getAttribute('aria-controls')).hidden = !isActive;
+        }
+      };
+      modTabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => activateModTab(tab));
+        tab.addEventListener('keydown', event => {
+          let nextIndex;
+          if(event.key === 'ArrowRight') nextIndex = (index + 1) % modTabs.length;
+          else if(event.key === 'ArrowLeft') nextIndex = (index - 1 + modTabs.length) % modTabs.length;
+          else if(event.key === 'Home') nextIndex = 0;
+          else if(event.key === 'End') nextIndex = modTabs.length - 1;
+          else return;
+          event.preventDefault();
+          modTabs[nextIndex].focus();
+          activateModTab(modTabs[nextIndex]);
+        });
+      });
+
+      document.querySelectorAll('.mod-tag-filter-toggle').forEach(button => {
+        button.addEventListener('click', () => {
+          const tag = button.dataset.modTag;
+          if(activeModTagFilters.has(tag)) activeModTagFilters.delete(tag);
+          else if(compatibleModTags.has(tag)) activeModTagFilters.add(tag);
+          else return;
+          renderMods();
+          const restoredButton = Array.from(document.querySelectorAll('.mod-tag-filter-toggle'))
+            .find(option => option.dataset.modTag === tag);
+          if(restoredButton) restoredButton.focus();
+        });
+      });
+      const clearModTagFilters = document.querySelector('.mod-tag-filter-clear');
+      if(clearModTagFilters){
+        clearModTagFilters.addEventListener('click', () => {
+          activeModTagFilters.clear();
+          renderMods();
+          const firstTagButton = document.querySelector('.mod-tag-filter-toggle');
+          if(firstTagButton) firstTagButton.focus();
+        });
+      }
+
+      document.querySelectorAll('.cluster-subtype-toggle').forEach(button => {
+        button.addEventListener('click', () => {
+          activeClusterSubtypeId = activeClusterSubtypeId === button.dataset.clusterSubtype
+            ? null
+            : button.dataset.clusterSubtype;
+          renderMods();
+          const restoredButton = Array.from(document.querySelectorAll('.cluster-subtype-toggle'))
+            .find(option => option.dataset.clusterSubtype === button.dataset.clusterSubtype);
+          if(restoredButton) restoredButton.focus();
+        });
+      });
+
+      // Event listeners for mod groups
+      document.querySelectorAll('.mod-group-header').forEach(header => {
+        const toggleGroup = () => {
+          const groupId = header.dataset.groupId;
+          const content = document.getElementById(groupId);
+          const toggle = header.querySelector('.mod-group-toggle');
+          const isVisible = content.style.display !== 'none';
+          content.style.display = isVisible ? 'none' : 'block';
+          toggle.textContent = isVisible ? '▶' : '▼';
+          header.setAttribute('aria-expanded', String(!isVisible));
+          openModGroups.set(
+            getModGroupStateKey(header.dataset.baseId, header.dataset.sectionTitle, header.dataset.modType),
+            !isVisible
+          );
+        };
+        header.addEventListener('click', toggleGroup);
+        header.addEventListener('keydown', event => {
+          if(event.key === 'Enter' || event.key === ' '){
+            event.preventDefault();
+            toggleGroup();
+          }
+        });
+      });
+
+      // Event listeners for mod selection buttons
+      document.querySelectorAll('.mod-select-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const modId = btn.dataset.modId;
+          const modType = btn.dataset.modType;
+          const modName = btn.dataset.modName;
+          const isPrefix = btn.dataset.isPrefix === 'true';
+          const typeKey = isPrefix ? 'prefixes' : 'suffixes';
+
+          // Find the full mod object
+          const mod = allMods.find(m => m.id === modId);
+          
+          // Check if already selected
+          if(selectedMods[typeKey][modType] && selectedMods[typeKey][modType].id === modId){
+            // Deselect
+            delete selectedMods[typeKey][modType];
+          } else {
+            // Check if can select (max 3 per type)
+            if(Object.keys(selectedMods[typeKey]).length >= 3 && !selectedMods[typeKey][modType]){
+              const selectionNotice = document.getElementById('mod-selection-notice');
+              selectionNotice.textContent = 'Maximum 3 ' + (isPrefix ? 'prefixes' : 'suffixes') + '.';
+              selectionNotice.hidden = false;
+              return;
+            }
+            // Select (replace if group already has a selection)
+            selectedMods[typeKey][modType] = mod;
+          }
+          
+          renderMods();
+          renderSelectedModsPanel();
+          renderModCalculations();
+          render();
+        });
+      });
+    }
+
+    function calculateModEffects(){
+      if(!selectedItem) return null;
+      
+      const baseStats = {
+        physical_damage_min: null,
+        physical_damage_max: null,
+        armour: null,
+        evasion: null,
+        energy_shield: null
+      };
+      
+      // Extract base values from item properties, with quality applied
+      if(selectedItem.properties){
+        if(selectedItem.properties.physical_damage_min !== undefined) 
+          baseStats.physical_damage_min = Number(applyQuality('physical_damage', selectedItem.properties.physical_damage_min)) || 0;
+        if(selectedItem.properties.physical_damage_max !== undefined) 
+          baseStats.physical_damage_max = Number(applyQuality('physical_damage', selectedItem.properties.physical_damage_max)) || 0;
+        if(selectedItem.properties.armour !== undefined) 
+          baseStats.armour = Number(applyQuality('armour', selectedItem.properties.armour)) || 0;
+        if(selectedItem.properties.evasion !== undefined) 
+          baseStats.evasion = Number(applyQuality('evasion', selectedItem.properties.evasion)) || 0;
+        if(selectedItem.properties.energy_shield !== undefined) 
+          baseStats.energy_shield = Number(applyQuality('energy_shield', selectedItem.properties.energy_shield)) || 0;
+      }
+      
+      // Accumulate flat and percentage bonuses from selected mods
+      const flatBonuses = {
+        armour: 0,
+        evasion: 0,
+        energy_shield: 0
+      };
+      
+      const percentBonuses = {
+        armour: 0,
+        evasion: 0,
+        energy_shield: 0
+      };
+      
+      const allSelectedMods = {...selectedMods.prefixes, ...selectedMods.suffixes};
+      
+      for(const modType in allSelectedMods){
+        const mod = allSelectedMods[modType];
+        const modText = mod.text || '';
+        
+        // Extract flat armour
+        const armourMatch = modText.match(/\+(\d+)\s+to\s+Armour/i);
+        if(armourMatch){
+          flatBonuses.armour += Number(armourMatch[1]);
+        }
+        
+        // Extract increased armour
+        let increaseArmourMatch = modText.match(/\((\d+)-(\d+)\)%\s+(?:more|increased)\s+Armour/i);
+        if(!increaseArmourMatch) increaseArmourMatch = modText.match(/(\d+)(?:-(\d+))?%\s+(?:more|increased)\s+Armour/i);
+        if(increaseArmourMatch){
+          const percentValue = increaseArmourMatch[2] ? Number(increaseArmourMatch[2]) : Number(increaseArmourMatch[1]);
+          percentBonuses.armour += percentValue;
+        }
+        
+        // Extract flat evasion
+        const evasionMatch = modText.match(/\+(\d+)\s+to\s+Evasion Rating/i);
+        if(evasionMatch){
+          flatBonuses.evasion += Number(evasionMatch[1]);
+        }
+        
+        // Extract increased evasion
+        let increaseEvasionMatch = modText.match(/\((\d+)-(\d+)\)%\s+(?:more|increased)\s+Evasion Rating/i);
+        if(!increaseEvasionMatch) increaseEvasionMatch = modText.match(/(\d+)(?:-(\d+))?%\s+(?:more|increased)\s+Evasion Rating/i);
+        if(increaseEvasionMatch){
+          const percentValue = increaseEvasionMatch[2] ? Number(increaseEvasionMatch[2]) : Number(increaseEvasionMatch[1]);
+          percentBonuses.evasion += percentValue;
+        }
+        
+        // Extract flat energy shield
+        const esMatch = modText.match(/\+(\d+)\s+to\s+(?:maximum\s+)?Energy Shield/i);
+        if(esMatch){
+          flatBonuses.energy_shield += Number(esMatch[1]);
+        }
+        
+        // Extract increased energy shield
+        let increaseESMatch = modText.match(/\((\d+)-(\d+)\)%\s+(?:more|increased)\s+(?:maximum\s+)?Energy Shield/i);
+        if(!increaseESMatch) increaseESMatch = modText.match(/(\d+)(?:-(\d+))?%\s+(?:more|increased)\s+(?:maximum\s+)?Energy Shield/i);
+        if(increaseESMatch){
+          const percentValue = increaseESMatch[2] ? Number(increaseESMatch[2]) : Number(increaseESMatch[1]);
+          percentBonuses.energy_shield += percentValue;
+        }
+      }
+      
+      // Calculate final values: base + flat, then apply percentage
+      const finalStats = {};
+      
+      // Armour - apply even if base is null
+      if(flatBonuses.armour > 0 || percentBonuses.armour > 0 || baseStats.armour){
+        let val = (baseStats.armour || 0) + flatBonuses.armour;
+        val = Math.round(val * (1 + percentBonuses.armour / 100));
+        finalStats.armour = val;
+      }
+      
+      // Evasion - apply even if base is null
+      if(flatBonuses.evasion > 0 || percentBonuses.evasion > 0 || baseStats.evasion){
+        let val = (baseStats.evasion || 0) + flatBonuses.evasion;
+        val = Math.round(val * (1 + percentBonuses.evasion / 100));
+        finalStats.evasion = val;
+      }
+      
+      // Energy Shield - apply even if base is null
+      if(flatBonuses.energy_shield > 0 || percentBonuses.energy_shield > 0 || baseStats.energy_shield){
+        let val = (baseStats.energy_shield || 0) + flatBonuses.energy_shield;
+        val = Math.round(val * (1 + percentBonuses.energy_shield / 100));
+        finalStats.energy_shield = val;
+      }
+      
+      return { baseStats, finalStats, flatBonuses, percentBonuses };
+    }
+
+    function updateSelectedRowWithCalculations(){
+      if(!selectedItem){
+        return;
+      }
+      
+      const calc = calculateModEffects();
+      if(!calc){
+        return;
+      }
+      
+      const hasSelectedMods = Object.keys(selectedMods.prefixes).length > 0 || Object.keys(selectedMods.suffixes).length > 0;
+      
+      if(!hasSelectedMods){
+        // Reset to base values
+        const selectedRow = document.querySelector('#table-results table.results tbody tr.selected');
+        if(selectedRow){
+          const cells = Array.from(selectedRow.cells);
+          cells.forEach(cell => {
+            cell.style.backgroundColor = '';
+            cell.style.fontWeight = '';
+          });
+        }
+        return;
+      }
+      
+      const { baseStats, finalStats } = calc;
+      const selectedRow = document.querySelector('#table-results table.results tbody tr.selected');
+      if(!selectedRow) return;
+      
+      const table = document.querySelector('#table-results table.results');
+      if(!table) return;
+      
+      // Find all header rows and build accurate column map
+      const headerRows = Array.from(table.querySelectorAll('thead tr'));
+      const bodyCells = Array.from(selectedRow.cells);
+      
+      // Create a more robust column map
+      const columnMap = {};
+      let cellIndex = 0;
+      
+      for(let rowIdx = 0; rowIdx < headerRows.length; rowIdx++){
+        const row = headerRows[rowIdx];
+        const cells = Array.from(row.cells);
+        
+        for(let cellIdx = 0; cellIdx < cells.length; cellIdx++){
+          const cell = cells[cellIdx];
+          const key = cell.getAttribute('data-key') || '';
+          const colspan = parseInt(cell.getAttribute('colspan')) || 1;
+          
+          // Record this cell's column span
+          if(key){
+            // Store all indices this key spans
+            for(let c = 0; c < colspan; c++){
+              columnMap[key + '_' + c] = cellIndex + c;
+            }
+            // Also store the first index
+            columnMap[key] = cellIndex;
+          }
+          cellIndex += colspan;
+        }
+      }
+      
+      console.log('Column map keys:', Object.keys(columnMap).filter(k => k.includes('physical_damage')));
+      
+      // Helper to find column index for a property
+      const findColumnIndex = (propName) => {
+        // Look for exact match first
+        for(const key in columnMap){
+          if(key.includes(propName) && !key.endsWith('_0') && !key.endsWith('_1')){
+            return columnMap[key];
+          }
+        }
+        return undefined;
+      };
+      
+      // Reset all cells first
+      bodyCells.forEach(cell => {
+        cell.style.backgroundColor = '';
+        cell.style.fontWeight = '';
+      });
+      
+      // Update armour
+      if(finalStats.armour !== undefined){
+        const armIdx = findColumnIndex('armour');
+        if(armIdx !== undefined && armIdx >= 0 && armIdx < bodyCells.length){
+          bodyCells[armIdx].textContent = finalStats.armour;
+          bodyCells[armIdx].style.backgroundColor = 'rgba(34, 139, 34, 0.25)';
+          bodyCells[armIdx].style.fontWeight = '600';
+        }
+      }
+      
+      // Update evasion
+      if(finalStats.evasion !== undefined){
+        const evasIdx = findColumnIndex('evasion');
+        if(evasIdx !== undefined && evasIdx >= 0 && evasIdx < bodyCells.length){
+          bodyCells[evasIdx].textContent = finalStats.evasion;
+          bodyCells[evasIdx].style.backgroundColor = 'rgba(34, 139, 34, 0.25)';
+          bodyCells[evasIdx].style.fontWeight = '600';
+        }
+      }
+      
+      // Update energy shield
+      if(finalStats.energy_shield !== undefined){
+        const esIdx = findColumnIndex('energy_shield');
+        if(esIdx !== undefined && esIdx >= 0 && esIdx < bodyCells.length){
+          bodyCells[esIdx].textContent = finalStats.energy_shield;
+          bodyCells[esIdx].style.backgroundColor = 'rgba(34, 139, 34, 0.25)';
+          bodyCells[esIdx].style.fontWeight = '600';
+        }
+      }
+    }
+
+    function renderModCalculations(){
+      if(!selectedItem){
+        document.getElementById('mod-calculations').style.display = 'none';
+        return;
+      }
+      
+      const calc = calculateModEffects();
+      if(!calc){
+        document.getElementById('mod-calculations').style.display = 'none';
+        return;
+      }
+      
+      const hasSelectedMods = Object.keys(selectedMods.prefixes).length > 0 || Object.keys(selectedMods.suffixes).length > 0;
+      
+      if(!hasSelectedMods){
+        document.getElementById('mod-calculations').style.display = 'none';
+        return;
+      }
+      
+      const { baseStats, finalStats } = calc;
+      let html = '';
+      
+      // Physical damage
+      const physicalMinRange = calculatePhysicalDamageRange(selectedItem, 'min');
+      const physicalMaxRange = calculatePhysicalDamageRange(selectedItem, 'max');
+      if(physicalMinRange && physicalMaxRange){
+        const baseMin = baseStats.physical_damage_min || 0;
+        const baseMax = baseStats.physical_damage_max || 0;
+        const finalMin = physicalMinRange.max === physicalMinRange.min
+          ? String(physicalMinRange.min)
+          : physicalMinRange.max + '-' + physicalMinRange.min;
+        const finalMax = physicalMaxRange.max === physicalMaxRange.min
+          ? String(physicalMaxRange.min)
+          : physicalMaxRange.max + '-' + physicalMaxRange.min;
+        const changed = physicalMinRange.min !== baseMin || physicalMinRange.max !== baseMin ||
+          physicalMaxRange.min !== baseMax || physicalMaxRange.max !== baseMax;
+        if(changed){
+          html += '<div style="color:var(--match);font-weight:600">Physical Damage: <span style="text-decoration:line-through">'+baseMin+'-'+baseMax+'</span> → '+finalMin+' to '+finalMax+'</div>';
+        }
+      }
+      
+      // Armour
+      if(finalStats.armour !== undefined){
+        const baseVal = baseStats.armour || 0;
+        const finalVal = finalStats.armour;
+        const changed = finalVal !== baseVal;
+        if(changed){
+          html += '<div style="'+(changed?'color:var(--match);font-weight:600':'')+'">Armour: <span style="text-decoration:line-through">'+baseVal+'</span> → '+finalVal+'</div>';
+        }
+      }
+      
+      // Evasion
+      if(finalStats.evasion !== undefined){
+        const baseVal = baseStats.evasion || 0;
+        const finalVal = finalStats.evasion;
+        const changed = finalVal !== baseVal;
+        if(changed){
+          html += '<div style="'+(changed?'color:var(--match);font-weight:600':'')+'">Evasion: <span style="text-decoration:line-through">'+baseVal+'</span> → '+finalVal+'</div>';
+        }
+      }
+      
+      // Energy Shield
+      if(finalStats.energy_shield !== undefined){
+        const baseVal = baseStats.energy_shield || 0;
+        const finalVal = finalStats.energy_shield;
+        const changed = finalVal !== baseVal;
+        if(changed){
+          html += '<div style="'+(changed?'color:var(--match);font-weight:600':'')+'">Energy Shield: <span style="text-decoration:line-through">'+baseVal+'</span> → '+finalVal+'</div>';
+        }
+      }
+      
+      if(html){
+        document.getElementById('mod-calcs-content').innerHTML = html;
+        document.getElementById('mod-calculations').style.display = 'block';
+      } else {
+        document.getElementById('mod-calculations').style.display = 'none';
+      }
+      
+      updateSelectedRowWithCalculations();
+    }
+
+    function renderSelectedModsPanel(){
+      const renderList = (typeKey, prefix) => {
+        const list = document.getElementById('selected-' + typeKey + '-list');
+        const count = Object.keys(selectedMods[typeKey]).length;
+        const countEl = document.getElementById('selected-' + typeKey + '-count');
+        if(countEl) countEl.textContent = prefix + ' (' + count + '/3)';
+        
+        let html = '';
+        for(const modType in selectedMods[typeKey]){
+          const mod = selectedMods[typeKey][modType];
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;background:rgba(0,0,0,0.05);border-radius:4px;border-left:3px solid var(--accent)">';
+          html += '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:0.85em">'+renderModLocality([mod])+' '+escapeHtml(mod.name)+'</div>';
+          html += '<div style="font-size:0.75em;color:var(--muted)">'+escapeHtml(modType)+'</div></div>';
+          html += '<button class="mod-remove-btn" data-mod-type="'+escapeHtml(modType)+'" data-is-prefix="'+(typeKey==='prefixes')+'" style="margin-left:8px;padding:2px 6px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;border-radius:3px;font-size:0.8em">−</button>';
+          html += '</div>';
+        }
+        list.innerHTML = html;
+        
+        // Add remove button listeners
+        list.querySelectorAll('.mod-remove-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const modType = btn.dataset.modType;
+            const isPrefix = btn.dataset.isPrefix === 'true';
+            const typeKey = isPrefix ? 'prefixes' : 'suffixes';
+            delete selectedMods[typeKey][modType];
+            renderMods();
+            renderSelectedModsPanel();
+            render();
+            renderModCalculations();
+          });
+        });
+      };
+      
+      renderList('prefixes', 'Prefixes');
+      renderList('suffixes', 'Suffixes');
+      renderModCalculations();
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    load();
+  </script>
+</body>
+</html>
